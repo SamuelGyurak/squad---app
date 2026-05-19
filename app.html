@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Squad</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0c14;
+  --c1:#12121e;
+  --c2:#181828;
+  --c3:#1e1e30;
+  --c4:#252538;
+  --b1:rgba(255,255,255,0.06);
+  --b2:rgba(255,255,255,0.10);
+  --b3:rgba(255,255,255,0.16);
+  --t1:#eeeeff;
+  --t2:#9898b8;
+  --t3:#52526a;
+  --acc:#635bff;
+  --acc2:#8880ff;
+  --acc3:rgba(99,91,255,0.18);
+  --acc4:rgba(99,91,255,0.08);
+  --green:#22c55e;
+  --green2:rgba(34,197,94,0.12);
+  --red:#ef4444;
+  --red2:rgba(239,68,68,0.12);
+  --amber:#f59e0b;
+  --amber2:rgba(245,158,11,0.12);
+  --coral:#f97316;
+}
+html,body{height:100%;background:var(--bg);color:var(--t1);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow:hidden}
+
+/* ── SPLASH ── */
+#splash{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.splash-logo{font-size:28px;font-weight:800;letter-spacing:-1px}
+.splash-logo span{color:var(--acc2)}
+.spin{width:28px;height:28px;border:2.5px solid var(--b2);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── LAYOUT ── */
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR (desktop) ── */
+.sidebar{
+  width:240px;flex-shrink:0;
+  background:var(--c1);
+  border-right:1px solid var(--b1);
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+}
+.sb-head{padding:20px 16px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--b1)}
+.sb-logo-mark{width:32px;height:32px;background:var(--acc);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:#fff;flex-shrink:0;letter-spacing:-1px}
+.sb-logo-text{font-weight:700;font-size:16px;letter-spacing:-.3px}
+.sb-logo-text span{color:var(--acc2)}
+.sb-section{padding:12px 8px 4px}
+.sb-label{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;padding:0 10px;margin-bottom:4px}
+.sb-btn{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:10px;font-size:13px;font-weight:500;color:var(--t2);border:none;background:transparent;width:100%;text-align:left;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.sb-btn i{font-size:16px;width:18px;text-align:center;flex-shrink:0}
+.sb-btn:hover{background:var(--c3);color:var(--t1)}
+.sb-btn.active{background:var(--acc3);color:var(--acc2)}
+.sb-group-btn{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:10px;font-size:13px;color:var(--t2);border:none;background:transparent;width:100%;text-align:left;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.sb-group-btn:hover{background:var(--c3);color:var(--t1)}
+.sb-group-btn.active{background:var(--c3);color:var(--t1);font-weight:500}
+.sb-group-ico{width:24px;height:24px;border-radius:7px;background:var(--c4);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.sb-new-group{display:flex;align-items:center;gap:7px;padding:8px 10px;margin:6px 8px;border-radius:10px;font-size:12px;color:var(--t3);border:1px dashed var(--b2);background:transparent;width:calc(100% - 16px);cursor:pointer;transition:all .15s}
+.sb-new-group:hover{border-color:var(--acc);color:var(--acc2);background:var(--acc4)}
+.sb-footer{margin-top:auto;padding:12px 8px;border-top:1px solid var(--b1)}
+.sb-upgrade{width:100%;padding:9px;background:var(--acc3);border:1px solid rgba(99,91,255,0.25);border-radius:10px;color:var(--acc2);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;transition:all .2s}
+.sb-upgrade:hover{background:var(--acc);color:#fff;border-color:var(--acc)}
+.sb-user{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:10px;cursor:pointer;transition:background .15s}
+.sb-user:hover{background:var(--c3)}
+.sb-av{width:30px;height:30px;border-radius:50%;background:var(--acc3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--acc2);flex-shrink:0}
+.sb-uname{font-size:13px;font-weight:500}
+.sb-uemail{font-size:11px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}
+.sb-logout{width:100%;margin-top:6px;padding:8px;border:1px solid var(--b1);border-radius:10px;background:transparent;color:var(--t3);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s}
+.sb-logout:hover{border-color:var(--red);color:var(--red)}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* ── TOPBAR ── */
+.topbar{height:56px;padding:0 20px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--c1)}
+.topbar-left{display:flex;flex-direction:column}
+.topbar-title{font-size:15px;font-weight:700;letter-spacing:-.2px}
+.topbar-sub{font-size:11px;color:var(--t3)}
+.topbar-right{display:flex;align-items:center;gap:6px}
+.icon-btn{width:34px;height:34px;border-radius:9px;background:transparent;border:1px solid var(--b2);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t2);font-size:16px;transition:all .15s}
+.icon-btn:hover{background:var(--c3);color:var(--t1)}
+.primary-btn{padding:8px 16px;background:var(--acc);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap}
+.primary-btn:hover{background:var(--acc2)}
+.primary-btn.sm{padding:6px 12px;font-size:12px}
+
+/* ── CONTENT ── */
+.content{flex:1;overflow-y:auto;padding:20px}
+.screen{display:none}
+.screen.active{display:block;animation:fadeIn .15s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── BOTTOM NAV (mobile) ── */
+.bottom-nav{display:none;height:64px;background:var(--c1);border-top:1px solid var(--b1);flex-shrink:0}
+.bn-inner{display:flex;height:100%}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;font-weight:500;color:var(--t3);cursor:pointer;border:none;background:transparent;transition:all .15s}
+.bn-item i{font-size:22px}
+.bn-item.active{color:var(--acc2)}
+
+/* ── CARDS ── */
+.card{background:var(--c2);border:1px solid var(--b1);border-radius:14px;padding:16px;margin-bottom:12px}
+.card:hover{border-color:var(--b2)}
+.card-title{font-size:13px;font-weight:600;color:var(--t2);margin-bottom:12px;display:flex;align-items:center;gap:7px;text-transform:uppercase;letter-spacing:.5px}
+.card-title i{font-size:15px;color:var(--acc)}
+
+/* ── SECTION LABEL ── */
+.sec{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin:18px 0 8px}
+.sec:first-child{margin-top:0}
+
+/* ── GROUP CARDS (home) ── */
+.groups-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:16px}
+.group-card{background:var(--c2);border:1px solid var(--b1);border-radius:14px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.group-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent,var(--acc))}
+.group-card:hover{border-color:var(--b2);transform:translateY(-2px)}
+.group-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.group-card-ico{width:40px;height:40px;border-radius:12px;background:var(--c3);display:flex;align-items:center;justify-content:center;font-size:20px}
+.group-card-role{font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;background:var(--c4);color:var(--t3)}
+.group-card-name{font-size:15px;font-weight:700;margin-bottom:3px;letter-spacing:-.2px}
+.group-card-meta{font-size:12px;color:var(--t3)}
+.new-group-card{background:transparent;border:1.5px dashed var(--b2);border-radius:14px;padding:16px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:110px;color:var(--t3);font-size:13px}
+.new-group-card:hover{border-color:var(--acc);color:var(--acc2);background:var(--acc4)}
+.new-group-card i{font-size:24px}
+
+/* ── GROUP HEADER ── */
+.group-header{background:var(--c2);border:1px solid var(--b1);border-radius:14px;padding:16px;margin-bottom:16px;display:flex;align-items:center;gap:14px}
+.gh-ico{width:48px;height:48px;border-radius:14px;background:var(--c3);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.gh-name{font-size:18px;font-weight:800;letter-spacing:-.4px;margin-bottom:2px}
+.gh-meta{font-size:12px;color:var(--t3)}
+.gh-avs{display:flex;margin-top:6px}
+.gh-av{width:22px;height:22px;border-radius:50%;border:2px solid var(--c2);margin-left:-6px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700}
+.gh-av:first-child{margin-left:0}
+.gh-btns{margin-left:auto;display:flex;gap:6px;flex-shrink:0}
+
+/* ── GROUP TABS ── */
+.gtabs{display:flex;gap:2px;background:var(--c2);border:1px solid var(--b1);border-radius:12px;padding:4px;margin-bottom:16px;overflow-x:auto;width:fit-content;max-width:100%}
+.gtabs::-webkit-scrollbar{display:none}
+.gtab{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:500;color:var(--t3);border:none;background:transparent;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.gtab i{font-size:14px}
+.gtab:hover{color:var(--t1)}
+.gtab.active{background:var(--c4);color:var(--t1)}
+
+/* ── OVERVIEW STATS ── */
+.ov-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.ov-stat{background:var(--c2);border:1px solid var(--b1);border-radius:12px;padding:14px}
+.ov-stat-lbl{font-size:11px;color:var(--t3);margin-bottom:4px}
+.ov-stat-val{font-size:22px;font-weight:800;letter-spacing:-.5px}
+.ov-stat-val.g{color:var(--green)}
+.ov-stat-val.r{color:var(--red)}
+.ov-alert{background:var(--green2);border:1px solid rgba(34,197,94,0.2);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:13px}
+.ov-alert i{color:var(--green);font-size:18px;flex-shrink:0}
+
+/* ── EXPENSE ITEMS ── */
+.exp-item{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--c2);border:1px solid var(--b1);border-radius:12px;margin-bottom:8px;transition:border-color .15s;cursor:default}
+.exp-item:hover{border-color:var(--b2)}
+.exp-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.exp-info{flex:1;min-width:0}
+.exp-name{font-size:13px;font-weight:600}
+.exp-who{font-size:11px;color:var(--t3);margin-top:1px}
+.exp-amt{font-size:15px;font-weight:700;text-align:right}
+.exp-per{font-size:10px;color:var(--t3);text-align:right}
+.exp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.exp-stat{background:var(--c2);border:1px solid var(--b1);border-radius:12px;padding:12px}
+.exp-stat-lbl{font-size:10px;color:var(--t3);margin-bottom:3px}
+.exp-stat-val{font-size:18px;font-weight:700}
+.exp-stat-val.g{color:var(--green)}
+.exp-stat-val.r{color:var(--red)}
+
+/* ── DEBT ROW ── */
+.debt-row{display:flex;align-items:center;justify-content:space-between;background:var(--c3);border-radius:10px;padding:10px 14px;margin-bottom:8px}
+.debt-text{font-size:13px}
+.debt-text b{color:var(--red)}
+.settle-btn{font-size:11px;padding:5px 12px;background:var(--green2);color:var(--green);border:1px solid rgba(34,197,94,0.2);border-radius:8px;cursor:pointer;transition:all .15s}
+.settle-btn:hover{background:var(--green);color:#fff}
+.settle-btn.done{background:var(--c4);color:var(--t3);border-color:var(--b1);cursor:default}
+
+/* ── VOTE / PLAN ── */
+.vote-opt{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--c3);border:1.5px solid var(--b1);border-radius:12px;margin-bottom:8px;cursor:pointer;transition:all .18s}
+.vote-opt:hover{border-color:var(--acc)}
+.vote-opt.voted{border-color:var(--acc);background:var(--acc4)}
+.vote-name{font-size:13px;font-weight:600;flex:1}
+.vote-dt{font-size:11px;color:var(--t3);margin-top:1px}
+.vote-bar{height:3px;background:var(--b2);border-radius:2px;width:52px;overflow:hidden}
+.vote-fill{height:100%;background:var(--acc);border-radius:2px;transition:width .3s}
+.vote-cnt{font-size:11px;color:var(--t3);min-width:16px;text-align:right}
+.vote-chk{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .18s;flex-shrink:0;color:transparent}
+.vote-opt.voted .vote-chk{background:var(--acc);border-color:var(--acc);color:#fff}
+.avail-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;text-align:center;margin-top:8px}
+.avail-name{font-size:10px;color:var(--t3);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.avail-icon{font-size:18px;cursor:pointer;transition:transform .15s;user-select:none}
+.avail-icon:hover{transform:scale(1.2)}
+.vote-btns{display:flex;flex-direction:column;gap:3px}
+.vote-btn{font-size:11px;padding:3px 8px;border:1px solid var(--b2);border-radius:8px;cursor:pointer;background:var(--c4);color:var(--t3);transition:all .15s}
+.vote-btn.yes{background:var(--acc);border-color:var(--acc);color:#fff}
+.vote-btn.no{background:var(--red2);border-color:rgba(239,68,68,0.3);color:var(--red)}
+
+/* ── TIMELINE / MEMORIES ── */
+.tl-month{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin:16px 0 8px;display:flex;align-items:center;gap:8px}
+.tl-month::after{content:'';flex:1;height:1px;background:var(--b1)}
+.mem-card{background:var(--c2);border:1px solid var(--b1);border-radius:14px;overflow:hidden;margin-bottom:12px;transition:border-color .2s}
+.mem-card:hover{border-color:var(--b2)}
+.mem-photos{display:grid;grid-template-columns:2fr 1fr;gap:2px;height:160px}
+.ph-main{background:var(--c3);display:flex;align-items:center;justify-content:center;font-size:52px;cursor:pointer;transition:filter .2s;overflow:hidden}
+.ph-main:hover{filter:brightness(.8)}
+.ph-main img{width:100%;height:100%;object-fit:cover}
+.ph-side{display:grid;grid-template-rows:1fr 1fr;gap:2px}
+.ph-sm{background:var(--c4);display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;transition:filter .2s;overflow:hidden}
+.ph-sm:hover{filter:brightness(.8)}
+.ph-sm img{width:100%;height:100%;object-fit:cover}
+.ph-add{background:var(--c3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;color:var(--t3);cursor:pointer;transition:all .15s}
+.ph-add:hover{background:var(--acc4);color:var(--acc2)}
+.ph-add i{font-size:20px}
+.mem-info{padding:12px 14px}
+.mem-name{font-size:14px;font-weight:700;letter-spacing:-.2px;margin-bottom:3px}
+.mem-meta{font-size:11px;color:var(--t3);display:flex;gap:10px;margin-bottom:10px}
+.mem-actions{display:flex;gap:6px;flex-wrap:wrap}
+.mem-btn{display:flex;align-items:center;gap:4px;font-size:11px;background:var(--c3);border:1px solid var(--b1);border-radius:8px;padding:5px 10px;cursor:pointer;color:var(--t2);transition:all .15s}
+.mem-btn:hover{border-color:var(--acc);color:var(--acc2)}
+.mem-btn.liked{background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.2);color:var(--red)}
+
+/* ── UPLOAD DROP ZONE ── */
+.drop-zone{border:2px dashed var(--b2);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:all .2s}
+.drop-zone:hover,.drop-zone.over{border-color:var(--acc);background:var(--acc4)}
+.drop-zone i{font-size:32px;color:var(--t3);display:block;margin-bottom:8px}
+.drop-zone p{font-size:13px;color:var(--t3)}
+.drop-zone span{font-size:11px;color:var(--t3);opacity:.6;display:block;margin-top:3px}
+.preview-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.preview-item{aspect-ratio:1;border-radius:8px;overflow:hidden;position:relative;background:var(--c3)}
+.preview-item img{width:100%;height:100%;object-fit:cover}
+.preview-rm{position:absolute;top:3px;right:3px;width:18px;height:18px;background:rgba(0,0,0,.7);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:#fff;border:none}
+
+/* ── BORROW ── */
+.borrow-item{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--c2);border:1px solid var(--b1);border-radius:12px;margin-bottom:8px;transition:border-color .15s}
+.borrow-item:hover{border-color:var(--b2)}
+.borrow-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.borrow-info{flex:1;min-width:0}
+.borrow-name{font-size:13px;font-weight:600}
+.borrow-sub{font-size:11px;color:var(--t3)}
+.borrow-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.days-badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:7px}
+.days-ok{background:var(--amber2);color:var(--amber)}
+.days-warn{background:var(--red2);color:var(--red)}
+.remind-btn{font-size:11px;padding:4px 10px;background:var(--c3);border:1px solid var(--b1);border-radius:8px;cursor:pointer;color:var(--t3);display:flex;align-items:center;gap:3px;transition:all .15s}
+.remind-btn:hover{border-color:var(--acc);color:var(--acc2)}
+.remind-btn.sent{background:var(--green2);color:var(--green);border-color:rgba(34,197,94,0.2)}
+
+/* ── MEMBER ITEMS ── */
+.member-item{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--c2);border:1px solid var(--b1);border-radius:12px;margin-bottom:8px}
+.member-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.member-name{font-size:13px;font-weight:600}
+.member-sub{font-size:11px;color:var(--t3)}
+.member-role{font-size:10px;font-weight:600;padding:3px 9px;border-radius:7px;margin-left:auto;flex-shrink:0}
+.role-admin{background:var(--acc3);color:var(--acc2)}
+.role-member{background:var(--c4);color:var(--t3)}
+
+/* ── HISTORY ── */
+.hist-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--b1)}
+.hist-item:last-child{border:none}
+.hist-av{width:28px;height:28px;border-radius:50%;background:var(--c3);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.hist-text{flex:1;font-size:12px;line-height:1.5}
+.hist-time{font-size:10px;color:var(--t3);flex-shrink:0;margin-top:1px}
+
+/* ── ADD BUTTON ── */
+.add-btn{width:100%;padding:10px;border:1.5px dashed var(--b2);border-radius:12px;background:transparent;color:var(--t3);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s;margin-top:6px}
+.add-btn:hover{border-color:var(--acc);color:var(--acc2);background:var(--acc4)}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:40px 20px;color:var(--t3)}
+.empty i{font-size:40px;opacity:.3;display:block;margin-bottom:10px}
+.empty p{font-size:13px}
+
+/* ── INVITE BOX ── */
+.invite-code-box{background:var(--c3);border:1px solid var(--b2);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:8px}
+.invite-code-val{flex:1;font-family:monospace;font-size:13px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.invite-copy-btn{background:var(--acc3);border:1px solid rgba(99,91,255,.25);color:var(--acc2);padding:5px 12px;border-radius:8px;font-size:11px;cursor:pointer;white-space:nowrap;border:none;transition:all .15s}
+.invite-copy-btn:hover{background:var(--acc);color:#fff}
+.invite-big-code{background:var(--c3);border:1px solid var(--b2);border-radius:10px;padding:14px;text-align:center;margin-top:10px}
+.invite-big-code-val{font-family:monospace;font-size:24px;letter-spacing:5px;font-weight:700;color:var(--acc2)}
+
+/* ── MODAL ── */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:flex-end;justify-content:center;padding:0;backdrop-filter:blur(6px)}
+.mo.open{display:flex;animation:moFade .2s ease}
+@keyframes moFade{from{opacity:0}to{opacity:1}}
+.mo-box{background:var(--c2);border:1px solid var(--b2);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;animation:moSlide .25s cubic-bezier(.4,0,.2,1)}
+@keyframes moSlide{from{transform:translateY(40px)}to{transform:translateY(0)}}
+.mo-handle{width:36px;height:4px;background:var(--b2);border-radius:2px;margin:10px auto 0}
+.mo-head{padding:14px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--b1)}
+.mo-title{font-size:15px;font-weight:700}
+.mo-close{background:none;border:none;color:var(--t3);cursor:pointer;font-size:20px;padding:2px;line-height:1;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:7px;transition:all .15s}
+.mo-close:hover{background:var(--c3);color:var(--t1)}
+.mo-body{padding:16px 18px}
+.mo-field{margin-bottom:12px}
+.mo-lbl{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.mo-in,.mo-sel,.mo-ta{width:100%;background:var(--c3);border:1px solid var(--b2);border-radius:10px;padding:11px 14px;font-size:14px;font-family:'Inter',sans-serif;color:var(--t1);outline:none;transition:border-color .2s}
+.mo-in:focus,.mo-sel:focus,.mo-ta:focus{border-color:var(--acc)}
+.mo-in::placeholder,.mo-ta::placeholder{color:var(--t3)}
+.mo-ta{resize:vertical;min-height:80px}
+.mo-foot{padding:14px 18px 20px;display:flex;gap:8px}
+.mo-cancel{flex:1;padding:11px;border-radius:10px;border:1px solid var(--b2);background:transparent;color:var(--t2);font-size:14px;cursor:pointer}
+.mo-ok{flex:2;padding:11px;border-radius:10px;border:none;background:var(--acc);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
+.mo-ok:hover{background:var(--acc2)}
+.mo-ok.loading{opacity:.7;pointer-events:none}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(6px);background:var(--c3);border:1px solid var(--b2);color:var(--t1);padding:10px 20px;border-radius:100px;font-size:13px;font-weight:500;opacity:0;transition:all .25s;pointer-events:none;z-index:200;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:720px){
+  .sidebar{display:none}
+  .bottom-nav{display:flex}
+  .content{padding:14px}
+  .toast{bottom:76px}
+}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-logo">squad<span>.</span></div>
+  <div class="spin"></div>
+</div>
+
+<!-- SHELL -->
+<div class="shell" id="shell" style="display:none">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-head">
+      <div class="sb-logo-mark">S</div>
+      <div class="sb-logo-text">squad<span>.</span></div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-label">Hlavná</div>
+      <button class="sb-btn active" onclick="goHome(this)"><i class="ti ti-home"></i>Domov</button>
+    </div>
+    <div class="sb-section" style="flex:1">
+      <div class="sb-label">Skupiny</div>
+      <div id="sbGroups"><div style="padding:8px 10px;font-size:12px;color:var(--t3)">Načítavam...</div></div>
+      <button class="sb-new-group" onclick="openMo('moNewGroup')"><i class="ti ti-plus"></i>Nová skupina</button>
+    </div>
+    <div class="sb-footer">
+      <button class="sb-upgrade" onclick="toast('Pro verzia čoskoro 👑')"><i class="ti ti-crown" style="font-size:14px"></i>Upgrade na Pro</button>
+      <div class="sb-user" id="sbUser">
+        <div class="sb-av" id="sbAv">?</div>
+        <div style="min-width:0">
+          <div class="sb-uname" id="sbName">...</div>
+          <div class="sb-uemail" id="sbEmail"></div>
+        </div>
+      </div>
+      <button class="sb-logout" onclick="doLogout()"><i class="ti ti-logout" style="font-size:13px"></i>Odhlásiť sa</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="tbTitle">Domov</div>
+        <div class="topbar-sub" id="tbSub"></div>
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn" onclick="toast('Hľadanie čoskoro 🔍')"><i class="ti ti-search"></i></button>
+        <button class="icon-btn" onclick="toast('Žiadne notifikácie')"><i class="ti ti-bell"></i></button>
+        <button class="primary-btn" id="tbBtn" onclick="openMo('moNewGroup')">
+          <i class="ti ti-plus"></i><span id="tbBtnTxt">Nová skupina</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="content" id="content">
+
+      <!-- HOME SCREEN -->
+      <div id="sh" class="screen active">
+        <div style="margin-bottom:20px">
+          <div style="font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:2px" id="homeGreet">Ahoj 👋</div>
+          <div style="font-size:13px;color:var(--t3)" id="homeSub">Načítavam...</div>
+        </div>
+        <div class="sec">Moje skupiny</div>
+        <div class="groups-grid" id="homeGroups"></div>
+        <div class="sec">Aktivita</div>
+        <div class="card">
+          <div class="hist-item">
+            <div class="hist-av">👋</div>
+            <div class="hist-text">Vitaj v Squad! Vytvor skupinu alebo sa pridaj cez pozývací link.</div>
+            <div class="hist-time">teraz</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GROUP SCREEN -->
+      <div id="sg" class="screen">
+        <div class="group-header" id="ghHeader">
+          <div class="gh-ico" id="ghIco">👥</div>
+          <div style="flex:1;min-width:0">
+            <div class="gh-name" id="ghName">Skupina</div>
+            <div class="gh-meta" id="ghMeta">0 členov</div>
+            <div class="gh-avs" id="ghAvs"></div>
+          </div>
+          <div class="gh-btns">
+            <button class="icon-btn" onclick="openMoInvite()" title="Pozvať">
+              <i class="ti ti-user-plus"></i>
+            </button>
+            <button class="icon-btn" onclick="toast('Nastavenia ⚙️')" title="Nastavenia">
+              <i class="ti ti-settings"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="gtabs" id="gTabs">
+          <button class="gtab active" onclick="gTab('ov',this)"><i class="ti ti-layout-dashboard"></i>Prehľad</button>
+          <button class="gtab" onclick="gTab('pl',this)"><i class="ti ti-calendar-event"></i>Plán</button>
+          <button class="gtab" onclick="gTab('ex',this)"><i class="ti ti-coins"></i>Výdavky</button>
+          <button class="gtab" onclick="gTab('tl',this)"><i class="ti ti-photo"></i>Spomienky</button>
+          <button class="gtab" onclick="gTab('bw',this)"><i class="ti ti-transfer"></i>Požičané</button>
+          <button class="gtab" onclick="gTab('mb',this)"><i class="ti ti-users"></i>Členovia</button>
+          <button class="gtab" onclick="gTab('hi',this)"><i class="ti ti-history"></i>História</button>
+        </div>
+
+        <div id="gt-ov" class="screen active"><div id="ovContent"><div class="empty"><i class="ti ti-loader" style="animation:spin .7s linear infinite"></i></div></div></div>
+        <div id="gt-pl" class="screen"><div id="plContent"></div></div>
+        <div id="gt-ex" class="screen"><div id="exContent"></div></div>
+        <div id="gt-tl" class="screen"><div id="tlContent"></div></div>
+        <div id="gt-bw" class="screen"><div id="bwContent"></div></div>
+        <div id="gt-mb" class="screen"><div id="mbContent"></div></div>
+        <div id="gt-hi" class="screen"><div id="hiContent"></div></div>
+      </div>
+
+    </div><!-- /content -->
+
+    <!-- BOTTOM NAV (mobile) -->
+    <div class="bottom-nav">
+      <div class="bn-inner" id="bnInner">
+        <button class="bn-item active" onclick="goHome(this)" data-screen="home">
+          <i class="ti ti-home"></i><span>Domov</span>
+        </button>
+        <button class="bn-item" id="bnGroup" onclick="bnGoGroup()" data-screen="group" style="display:none">
+          <i class="ti ti-layout-dashboard"></i><span>Skupina</span>
+        </button>
+        <button class="bn-item" onclick="openMo('moNewGroup')">
+          <i class="ti ti-plus"></i><span>Nová</span>
+        </button>
+        <button class="bn-item" onclick="toast('Notifikácie čoskoro 🔔')">
+          <i class="ti ti-bell"></i><span>Notif.</span>
+        </button>
+        <button class="bn-item" onclick="toast('Profil čoskoro 👤')">
+          <i class="ti ti-user"></i><span>Profil</span>
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<div class="toast" id="toastEl"></div>
+
+<!-- ═══════════ MODALS ═══════════ -->
+
+<!-- Nová skupina -->
+<div class="mo" id="moNewGroup" onclick="if(event.target===this)closeMo('moNewGroup')">
+  <div class="mo-box">
+    <div class="mo-handle"></div>
+    <div class="mo-head"><div class="mo-title">Nová skupina</div><button class="mo-close" onclick="closeMo('moNewGroup')"><i class="ti ti-x"></i></button></div>
+    <div class="mo-body">
+      <div class="mo-field">
+        <div class="mo-lbl">Názov skupiny</div>
+        <input class="mo-in" id="ngName" placeholder="Piatok Gang, Výletníci..." onkeydown="if(event.key==='Enter')document.getElementById('ngDesc').focus()">
+      </div>
+      <div class="mo-field">
+        <div class="mo-lbl">Popis (voliteľné)</div>
+        <input class="mo-in" id="ngDesc" placeholder="Naša parta...">
+      </div>
+      <div class="mo-field" style="margin-top:4px">
+        <div class="mo-lbl">Pozvať členov cez email</div>
+        <div id="ngEmailList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:6px"></div>
+        <div style="display:flex;gap:6px">
+          <input class="mo-in" id="ngEmailInput" type="email" placeholder="kamatat@email.sk" style="flex:1" onkeydown="if(event.key==='Enter')addNgEmail()">
+          <button onclick="addNgEmail()" style="padding:0 14px;background:var(--c3);border:1px solid var(--b2);border-radius:10px;color:var(--acc2);font-size:20px;cursor:pointer;flex-shrink:0;transition:all .15s" onmouseover="this.style.background='var(--acc3)'" onmouseout="this.style.background='var(--c3)'">+</button>
+        </div>
+        <div style="font-size:11px;color:var(--t3);margin-top:5px">Môžeš tiež pozvať neskôr cez pozývací link.</div>
+      </div>
+    </div>
+    <div class="mo-foot">
+      <button class="mo-cancel" onclick="closeMo('moNewGroup');clearNgEmails()">Zrušiť</button>
+      <button class="mo-ok" id="ngBtn" onclick="createGroup()">Vytvoriť skupinu</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pozvať -->
+<div class="mo" id="moInvite" onclick="if(event.target===this)closeMo('moInvite')">
+  <div class="mo-box">
+    <div class="mo-handle"></div>
+    <div class="mo-head"><div class="mo-title">Pozvať člena</div><button class="mo-close" onclick="closeMo('moInvite')"><i class="ti ti-x"></i></button></div>
+    <div class="mo-body">
+      <div class="mo-field">
+        <div class="mo-lbl">Pozývací link</div>
+        <div class="invite-code-box">
+          <div class="invite-code-val" id="inviteLink">Generujem...</div>
+          <button class="invite-copy-btn" onclick="copyInviteLink()">Kopírovať</button>
+        </div>
+      </div>
+      <div class="mo-field">
+        <div class="mo-lbl">Kód</div>
+        <div class="invite-big-code">
+          <div class="invite-big-code-val" id="inviteCode">---</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--t3);background:var(--c3);border-radius:10px;padding:10px 12px">
+        💡 Zdieľaj link alebo kód — kamaráti sa po kliknutí automaticky pridajú.
+      </div>
+    </div>
+    <div class="mo-foot"><button class="mo-cancel" onclick="closeMo('moInvite')" style="flex:1">Zavrieť</button></div>
+  </div>
+</div>
+
+<!-- Výdavok -->
+<div class="mo" id="moExpense" onclick="if(event.target===this)closeMo('moExpense')">
+  <div class="mo-box">
+    <div class="mo-handle"></div>
+    <div class="mo-head"><div class="mo-title">Pridať výdavok</div><button class="mo-close" onclick="closeMo('moExpense')"><i class="ti ti-x"></i></button></div>
+    <div class="mo-body">
+      <div class="mo-field"><div class="mo-lbl">Popis</div><input class="mo-in" id="expName" placeholder="Večera, Kino..."></div>
+      <div class="mo-field"><div class="mo-lbl">Suma (€)</div><input class="mo-in" id="expAmount" type="number" step="0.01" min="0" placeholder="0.00" style="font-size:24px;font-weight:700"></div>
+      <div class="mo-field"><div class="mo-lbl">Kategória</div>
+        <select class="mo-sel" id="expCat">
+          <option value="drink">🍺 Pitie</option>
+          <option value="food">🍕 Jedlo</option>
+          <option value="transport">🚗 Doprava</option>
+          <option value="entertainment">🎟️ Zábava</option>
+          <option value="accommodation">🛏️ Ubytovanie</option>
+          <option value="other">📦 Iné</option>
+        </select>
+      </div>
+      <div class="mo-field"><div class="mo-lbl">Rozdeliť</div><select class="mo-sel" id="expSplit"><option value="all">Všetkým rovnomerne</option></select></div>
+    </div>
+    <div class="mo-foot">
+      <button class="mo-cancel" onclick="closeMo('moExpense')">Zrušiť</button>
+      <button class="mo-ok" id="expBtn" onclick="addExpense()">Pridať výdavok</button>
+    </div>
+  </div>
+</div>
+
+<!-- Akcia / event -->
+<div class="mo" id="moEvent" onclick="if(event.target===this)closeMo('moEvent')">
+  <div class="mo-box">
+    <div class="mo-handle"></div>
+    <div class="mo-head"><div class="mo-title">Navrhnúť akciu</div><button class="mo-close" onclick="closeMo('moEvent')"><i class="ti ti-x"></i></button></div>
+    <div class="mo-body">
+      <div class="mo-field"><div class="mo-lbl">Emoji</div><input class="mo-in" id="evEmoji" placeholder="🎉" maxlength="2" style="font-size:24px;text-align:center"></div>
+      <div class="mo-field"><div class="mo-lbl">Názov</div><input class="mo-in" id="evName" placeholder="Bowling, Kino..."></div>
+      <div class="mo-field"><div class="mo-lbl">Dátum a čas</div><input class="mo-in" id="evDate" type="datetime-local"></div>
+      <div class="mo-field"><div class="mo-lbl">Miesto (voliteľné)</div><input class="mo-in" id="evLoc" placeholder="Bratislava..."></div>
+    </div>
+    <div class="mo-foot">
+      <button class="mo-cancel" onclick="closeMo('moEvent')">Zrušiť</button>
+      <button class="mo-ok" id="evBtn" onclick="addEvent()">Pridať akciu</button>
+    </div>
+  </div>
+</div>
+
+<!-- Spomienka / timeline -->
+<div class="mo" id="moMemory" onclick="if(event.target===this)closeMo('moMemory')">
+  <div class="mo-box">
+    <div class="mo-handle"></div>
+    <div class="mo-head"><div class="mo-title">📸 Pridať spomienku</div><button class="mo-close" onclick="closeMo('moMemory')"><i class="ti ti-x"></i></button></div>
+    <div class="mo-body">
+      <div class="mo-field"><div class="mo-lbl">Názov</div><input class="mo-in" id="memTitle" placeholder="Pivo s kamošmi, Výlet..."></div>
+      <div class="mo-field"><div class="mo-lbl">Dátum</div><input class="mo-in" id="memDate" type="date"></div>
+      <div class="mo-field"><div class="mo-lbl">Popis (voliteľné)</div><textarea class="mo-ta" id="memDesc" placeholder="Čo sme robili..."></textarea></div>
+      <div class="mo-field">
+        <div class="mo-lbl">Fotky</div>
+        <div class="drop-zone" id="dropZone" onclick="document.getElementById('photoInput').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+          <i class="ti ti-photo-plus"></i>
+          <p>Klikni alebo pretiahni fotky sem</p>
+          <span>JPG, PNG, WEBP · max 5MB každá</span>
+        </div>
+        <input type="file" id="photoInput" accept="image/*" multiple style="display:none" onchange="handlePhotoSelect(event)">
+        <div class="preview-grid" id="previewGrid"></div>
+      </div>
+    </div>
+    <div class="mo-foot">
+      <button class="mo-cancel" onclick="closeMo('moMemory');clearPreviews()">Zrušiť</button>
+      <button class="mo-ok" id="memBtn" onclick="addMemory()">Uložiť spomienku</button>
+    </div>
+  </div>
+</div>
+
+<!-- Požičanie -->
+<div class="mo" id="moBorrow" onclick="if(event.target===this)closeMo('moBorrow')">
+  <div class="mo-box">
+    <div class="mo-handle"></div>
+    <div class="mo-head"><div class="mo-title">Zaznamenať požičanie</div><button class="mo-close" onclick="closeMo('moBorrow')"><i class="ti ti-x"></i></button></div>
+    <div class="mo-body">
+      <div class="mo-field"><div class="mo-lbl">Čo</div><input class="mo-in" id="bwItem" placeholder="Nabíjačka, Kniha..."></div>
+      <div class="mo-field"><div class="mo-lbl">Komu</div><select class="mo-sel" id="bwTo"><option value="">Vybrať člena...</option></select></div>
+      <div class="mo-field"><div class="mo-lbl">Poznámka (voliteľné)</div><input class="mo-in" id="bwNote" placeholder="Vrátiť do týždňa..."></div>
+    </div>
+    <div class="mo-foot">
+      <button class="mo-cancel" onclick="closeMo('moBorrow')">Zrušiť</button>
+      <button class="mo-ok" id="bwBtn" onclick="addBorrow()">Uložiť</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════
+// SUPABASE
+// ═══════════════════════════════════
+const SUPA_URL = 'https://ntxtmyglpgtrqyhhfpmr.supabase.co'
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50eHRteWdscGd0cnF5aGhmcG1yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMTkwMzAsImV4cCI6MjA5NDY5NTAzMH0.F-EuiMd_kQ5BeQBUlRc43z2defPkg1mrathzhA3Q7p8'
+const { createClient } = supabase
+const sb = createClient(SUPA_URL, SUPA_KEY)
+
+// ═══════════════════════════════════
+// STATE
+// ═══════════════════════════════════
+let currentUser = null
+let currentProfile = null
+let currentGroupId = null
+let allGroups = []
+let groupMembers = []
+let pendingPhotos = []
+
+// ═══════════════════════════════════
+// INIT
+// ═══════════════════════════════════
+async function init() {
+  const { data: { session } } = await sb.auth.getSession()
+  if (!session) { window.location.href = 'index.html'; return }
+  currentUser = session.user
+  await loadProfile()
+  await loadGroups()
+  renderUserUI()
+  document.getElementById('splash').style.display = 'none'
+  document.getElementById('shell').style.display = 'flex'
+  const params = new URLSearchParams(window.location.search)
+  const inv = params.get('invite')
+  if (inv) await joinViaInvite(inv)
+}
+
+async function loadProfile() {
+  const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).single()
+  if (data) currentProfile = data
+}
+
+function renderUserUI() {
+  const name = currentProfile?.full_name || currentProfile?.first_name || currentUser.email?.split('@')[0] || 'User'
+  const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  document.getElementById('sbAv').textContent = initials
+  document.getElementById('sbName').textContent = name
+  document.getElementById('sbEmail').textContent = currentUser.email
+  document.getElementById('homeGreet').textContent = 'Ahoj, ' + name.split(' ')[0] + ' 👋'
+}
+
+// ═══════════════════════════════════
+// GROUPS
+// ═══════════════════════════════════
+async function loadGroups() {
+  const { data, error } = await sb.from('group_members')
+    .select('group_id, role, groups(*)')
+    .eq('user_id', currentUser.id)
+  if (error) { console.error(error); return }
+  allGroups = (data || []).map(d => ({ ...d.groups, myRole: d.role })).filter(g => g.id)
+  renderSidebarGroups()
+  renderHomeGroups()
+}
+
+function renderSidebarGroups() {
+  const el = document.getElementById('sbGroups')
+  if (!allGroups.length) {
+    el.innerHTML = '<div style="padding:6px 10px;font-size:12px;color:var(--t3)">Žiadne skupiny</div>'
+    return
+  }
+  el.innerHTML = allGroups.map(g => `
+    <button class="sb-group-btn" id="sbg-${g.id}" onclick="goGroup('${g.id}',this)">
+      <div class="sb-group-ico">${g.emoji||'👥'}</div>
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</span>
+    </button>
+  `).join('')
+}
+
+const ACCENTS = ['#635bff','#22c55e','#f97316','#ec4899','#06b6d4','#a855f7','#f59e0b','#ef4444']
+
+function renderHomeGroups() {
+  const el = document.getElementById('homeGroups')
+  const cnt = allGroups.length
+  document.getElementById('homeSub').textContent = cnt === 0 ? 'Vytvor svoju prvú skupinu!' : cnt === 1 ? '1 aktívna skupina' : `${cnt} aktívne skupiny`
+
+  let html = allGroups.map((g, i) => `
+    <div class="group-card" style="--accent:${ACCENTS[i % ACCENTS.length]}" onclick="goGroupCard('${g.id}')">
+      <div class="group-card-top">
+        <div class="group-card-ico">${g.emoji||'👥'}</div>
+        <div class="group-card-role">${g.myRole === 'admin' ? '👑 Admin' : 'Člen'}</div>
+      </div>
+      <div class="group-card-name">${g.name}</div>
+      <div class="group-card-meta">${g.description || 'Stlač pre detail'}</div>
+    </div>
+  `).join('')
+  html += `<div class="new-group-card" onclick="openMo('moNewGroup')"><i class="ti ti-plus"></i><span>Nová skupina</span></div>`
+  el.innerHTML = html
+}
+
+// ── EMAIL TAGS PRE NEW GROUP
+let ngEmails = []
+
+function addNgEmail() {
+  const inp = document.getElementById('ngEmailInput')
+  const email = inp.value.trim().toLowerCase()
+  if (!email) return
+  if (!email.includes('@') || !email.includes('.')) { toast('Zadaj platný email!'); return }
+  if (ngEmails.includes(email)) { toast('Tento email už je v zozname.'); inp.value = ''; return }
+  ngEmails.push(email)
+  renderNgEmails()
+  inp.value = ''
+  inp.focus()
+}
+
+function removeNgEmail(email) {
+  ngEmails = ngEmails.filter(e => e !== email)
+  renderNgEmails()
+}
+
+function renderNgEmails() {
+  const list = document.getElementById('ngEmailList')
+  if (!ngEmails.length) { list.innerHTML = ''; return }
+  list.innerHTML = ngEmails.map(e => `
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--c3);border:1px solid var(--b2);border-radius:9px;padding:8px 12px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:26px;height:26px;border-radius:50%;background:var(--acc3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--acc2)">${e[0].toUpperCase()}</div>
+        <span style="font-size:13px">${e}</span>
+      </div>
+      <button onclick="removeNgEmail('${e}')" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;padding:2px;line-height:1;transition:color .15s" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--t3)'">×</button>
+    </div>
+  `).join('')
+}
+
+function clearNgEmails() {
+  ngEmails = []
+  const l = document.getElementById('ngEmailList')
+  const i = document.getElementById('ngEmailInput')
+  if (l) l.innerHTML = ''
+  if (i) i.value = ''
+}
+
+async function createGroup() {
+  const name = document.getElementById('ngName').value.trim()
+  const desc = document.getElementById('ngDesc').value.trim()
+  if (!name) { toast('Zadaj názov skupiny!'); return }
+
+  const btn = document.getElementById('ngBtn')
+  btn.classList.add('loading'); btn.disabled = true; btn.textContent = 'Vytváram...'
+
+  // 1. Vytvor skupinu
+  const { data: g, error } = await sb.from('groups')
+    .insert({ name, emoji: '👥', description: desc, created_by: currentUser.id })
+    .select().single()
+  if (error) {
+    toast('Chyba: ' + error.message)
+    btn.classList.remove('loading'); btn.disabled = false; btn.textContent = 'Vytvoriť skupinu'
+    return
+  }
+
+  // 2. Pridaj seba ako admina
+  await sb.from('group_members').insert({ group_id: g.id, user_id: currentUser.id, role: 'admin' })
+
+  // 3. Vygeneruj invite kód
+  const { data: inv } = await sb.from('invites')
+    .insert({ group_id: g.id, created_by: currentUser.id })
+    .select('code').single()
+
+  // 4. Pošli pozvánky na emaily
+  if (ngEmails.length > 0) {
+    btn.textContent = 'Pozývam členov...'
+    let invitedCount = 0
+    for (const email of ngEmails) {
+      // Skús nájsť existujúceho usera
+      const { data: profile } = await sb.from('profiles').select('id').eq('email', email).maybeSingle()
+      if (profile) {
+        const { data: alreadyIn } = await sb.from('group_members').select('id').eq('group_id', g.id).eq('user_id', profile.id).maybeSingle()
+        if (!alreadyIn) {
+          await sb.from('group_members').insert({ group_id: g.id, user_id: profile.id, role: 'member' })
+          invitedCount++
+        }
+      } else {
+        // Ulož pending email invite
+        await sb.from('email_invites').insert({
+          group_id: g.id, email,
+          invite_code: inv?.code || null,
+          invited_by: currentUser.id
+        }).catch(() => {})
+        invitedCount++
+      }
+    }
+    toast(invitedCount > 0 ? `Skupina vytvorená + ${invitedCount} ${invitedCount === 1 ? "pozvaný" : "pozvaní"}! 🎉` : `"${name}" vytvorená! 🎉`)
+  } else {
+    toast(`"${name}" vytvorená! 🎉`)
+  }
+
+  btn.classList.remove('loading'); btn.disabled = false; btn.textContent = 'Vytvoriť skupinu'
+  closeMo('moNewGroup')
+  document.getElementById('ngName').value = ''
+  document.getElementById('ngDesc').value = ''
+  clearNgEmails()
+  await loadGroups()
+  goGroupCard(g.id)
+}
+
+// ═══════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════
+function goHome(btn) {
+  allOff()
+  if (btn) btn.classList.add('active')
+  document.getElementById('sh').classList.add('active')
+  document.getElementById('tbTitle').textContent = 'Domov'
+  document.getElementById('tbSub').textContent = ''
+  document.getElementById('tbBtnTxt').textContent = 'Nová skupina'
+  document.getElementById('tbBtn').onclick = () => openMo('moNewGroup')
+  document.getElementById('content').scrollTop = 0
+  // bottom nav
+  document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'))
+  document.querySelector('.bn-item[data-screen="home"]')?.classList.add('active')
+}
+
+async function goGroup(id, btn) {
+  currentGroupId = id
+  allOff()
+  if (btn) btn.classList.add('active')
+  document.getElementById('sg').classList.add('active')
+  resetGTabs()
+  document.getElementById('content').scrollTop = 0
+  // show group btn in bottom nav
+  const bnGroup = document.getElementById('bnGroup')
+  if (bnGroup) bnGroup.style.display = 'flex'
+  document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'))
+  bnGroup?.classList.add('active')
+  await loadGroupDetail(id)
+  await loadGroupMembers(id)
+  await loadGroupContent('ov')
+}
+
+function goGroupCard(id) { goGroup(id, document.getElementById('sbg-' + id)) }
+function bnGoGroup() { if (currentGroupId) { allOff(); document.getElementById('sg').classList.add('active'); document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active')); document.getElementById('bnGroup')?.classList.add('active') } }
+
+function allOff() {
+  document.querySelectorAll('.sb-btn,.sb-group-btn').forEach(b => b.classList.remove('active'))
+  document.querySelectorAll('#sh,#sg').forEach(s => s.classList.remove('active'))
+}
+
+function resetGTabs() {
+  document.querySelectorAll('[id^="gt-"]').forEach(s => s.classList.remove('active'))
+  document.getElementById('gt-ov').classList.add('active')
+  document.querySelectorAll('#gTabs .gtab').forEach((b, i) => b.classList.toggle('active', i === 0))
+}
+
+function gTab(id, btn) {
+  document.querySelectorAll('[id^="gt-"]').forEach(s => s.classList.remove('active'))
+  document.querySelectorAll('#gTabs .gtab').forEach(b => b.classList.remove('active'))
+  document.getElementById('gt-' + id)?.classList.add('active')
+  if (btn) btn.classList.add('active')
+  document.getElementById('content').scrollTop = 0
+  loadGroupContent(id)
+}
+
+// ═══════════════════════════════════
+// GROUP DETAIL
+// ═══════════════════════════════════
+async function loadGroupDetail(id) {
+  const g = allGroups.find(x => x.id === id)
+  if (!g) return
+  document.getElementById('ghIco').textContent = g.emoji || '👥'
+  document.getElementById('ghName').textContent = g.name
+  document.getElementById('tbTitle').textContent = g.name
+  document.getElementById('tbSub').textContent = g.description || ''
+  document.getElementById('tbBtnTxt').textContent = 'Výdavok'
+  document.getElementById('tbBtn').onclick = () => openMoExpense()
+}
+
+async function loadGroupMembers(id) {
+  const { data } = await sb.from('group_members').select('*, profiles(*)').eq('group_id', id)
+  groupMembers = data || []
+  const cnt = groupMembers.length
+  document.getElementById('ghMeta').textContent = `${cnt} ${cnt === 1 ? 'člen' : cnt < 5 ? 'členovia' : 'členov'}`
+  const clrs = ['#1a1a40','#0d2018','#2a1a10','#1a2010','#2a1520','#1a1208']
+  const tclrs = ['#635bff','#22c55e','#f97316','#8ab83a','#c47ab8','#e8a830']
+  document.getElementById('ghAvs').innerHTML = groupMembers.slice(0, 6).map((m, i) => {
+    const n = m.profiles?.full_name || m.profiles?.first_name || '?'
+    const ini = n.split(' ').map(x => x[0]).join('').toUpperCase().slice(0, 2)
+    return `<div class="gh-av" style="background:${clrs[i%clrs.length]};color:${tclrs[i%tclrs.length]}" title="${n}">${ini}</div>`
+  }).join('')
+  // populate borrow select
+  document.getElementById('bwTo').innerHTML = '<option value="">Vybrať člena...</option>' +
+    groupMembers.filter(m => m.user_id !== currentUser.id).map(m => {
+      const n = m.profiles?.full_name || m.profiles?.first_name || 'Neznámy'
+      return `<option value="${m.user_id}">${n}</option>`
+    }).join('')
+}
+
+// ═══════════════════════════════════
+// CONTENT LOADERS
+// ═══════════════════════════════════
+async function loadGroupContent(tab) {
+  if (!currentGroupId) return
+  switch (tab) {
+    case 'ov': await loadOverview(); break
+    case 'pl': await loadPlan(); break
+    case 'ex': await loadExpenses(); break
+    case 'tl': await loadTimeline(); break
+    case 'bw': await loadBorrow(); break
+    case 'mb': await loadMembers(); break
+    case 'hi': await loadHistory(); break
+  }
+}
+
+// ── OVERVIEW
+async function loadOverview() {
+  const [eRes, bRes] = await Promise.all([
+    sb.from('expenses').select('*').eq('group_id', currentGroupId),
+    sb.from('borrowed_items').select('*, lp:profiles!lent_by(*), tp:profiles!lent_to(*)').eq('group_id', currentGroupId).eq('returned', false)
+  ])
+  const exps = eRes.data || [], borrows = bRes.data || []
+  const total = exps.reduce((s, e) => s + Number(e.amount), 0)
+  let iGet = 0
+  exps.forEach(e => {
+    if (e.paid_by === currentUser.id) {
+      const pp = Number(e.amount) / (e.split_between?.length || 1)
+      iGet += (e.split_between?.filter(u => u !== currentUser.id)?.length || 0) * pp
+    }
+  })
+  const myBorrows = borrows.filter(b => b.lent_to === currentUser.id)
+  document.getElementById('ovContent').innerHTML = `
+    ${iGet > 0.01 ? `<div class="ov-alert"><i class="ti ti-coin"></i><div><div style="font-weight:600;color:var(--green)">Dostaneš späť ${iGet.toFixed(2)} €</div><div style="font-size:11px;color:var(--t3)">Celkové výdavky skupiny: ${total.toFixed(2)} €</div></div></div>` : ''}
+    <div class="ov-stats">
+      <div class="ov-stat"><div class="ov-stat-lbl">Celkové výdavky</div><div class="ov-stat-val">${total.toFixed(2)} €</div></div>
+      <div class="ov-stat"><div class="ov-stat-lbl">Ty dostaneš</div><div class="ov-stat-val g">+${iGet.toFixed(2)} €</div></div>
+    </div>
+    ${exps.length > 0 ? `<div class="sec">Posledné výdavky</div>${exps.slice(0, 3).map(renderExpItem).join('')}` : '<div class="empty" style="padding:20px 0"><i class="ti ti-coins"></i><p>Žiadne výdavky. Pridaj prvý!</p></div>'}
+    ${myBorrows.length > 0 ? `<div class="sec">Máš požičané</div>${myBorrows.slice(0, 2).map(b => `<div class="borrow-item"><div class="borrow-ico" style="background:var(--amber2);color:var(--amber)">📦</div><div class="borrow-info"><div class="borrow-name">${b.name}</div><div class="borrow-sub">Od ${b.lp?.full_name||b.lp?.first_name||'niekoho'}</div></div><div class="days-badge ${daysSince(b.lent_at) > 7 ? 'days-warn' : 'days-ok'}">${daysSince(b.lent_at)}d</div></div>`).join('')}` : ''}
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="primary-btn" style="flex:1;justify-content:center" onclick="openMoExpense()"><i class="ti ti-plus"></i>Výdavok</button>
+      <button class="primary-btn" style="flex:1;justify-content:center;background:var(--c3);color:var(--t1)" onclick="gTab('tl',document.querySelectorAll('#gTabs .gtab')[3])"><i class="ti ti-photo"></i>Spomienky</button>
+    </div>
+  `
+}
+
+// ── PLAN
+async function loadPlan() {
+  const { data: events } = await sb.from('events').select('*, votes:event_votes(*)').eq('group_id', currentGroupId).order('created_at', { ascending: false })
+  const evs = events || []
+  document.getElementById('plContent').innerHTML = `
+    <div class="card">
+      <div class="card-title"><i class="ti ti-calendar-event"></i>Navrhnuté akcie</div>
+      ${evs.length === 0 ? '<div class="empty" style="padding:16px 0"><i class="ti ti-calendar-event"></i><p>Žiadne akcie.</p></div>' : evs.map(renderEventVote).join('')}
+      <button class="add-btn" onclick="openMo('moEvent')"><i class="ti ti-plus"></i>Navrhnúť akciu</button>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-clock"></i>Kedy môžete?</div>
+      <div class="avail-grid">${groupMembers.map(m => {
+        const n = (m.profiles?.first_name || m.profiles?.full_name || '?').split(' ')[0]
+        return `<div><div class="avail-name">${n}</div><div class="avail-icon" onclick="cycleAvail(this)">⏳</div></div>`
+      }).join('')}</div>
+    </div>
+  `
+}
+
+function renderEventVote(event) {
+  const myVote = event.votes?.find(v => v.user_id === currentUser.id)
+  const yesCount = event.votes?.filter(v => v.status === 'yes').length || 0
+  const pct = groupMembers.length > 0 ? Math.round(yesCount / groupMembers.length * 100) : 0
+  const dt = event.date_time ? new Date(event.date_time).toLocaleString('sk', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Dátum neurčený'
+  return `
+    <div class="vote-opt ${myVote?.status === 'yes' ? 'voted' : ''}">
+      <div style="flex:1">
+        <div class="vote-name">${event.emoji || '📅'} ${event.title}</div>
+        <div class="vote-dt">${dt}${event.location ? ' · ' + event.location : ''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:7px">
+        <div class="vote-bar"><div class="vote-fill" style="width:${pct}%"></div></div>
+        <div class="vote-cnt">${yesCount}</div>
+      </div>
+      <div class="vote-btns">
+        <button class="vote-btn ${myVote?.status === 'yes' ? 'yes' : ''}" onclick="voteEvent('${event.id}','yes')">✓ Idem</button>
+        <button class="vote-btn ${myVote?.status === 'no' ? 'no' : ''}" onclick="voteEvent('${event.id}','no')">✗ Nejdem</button>
+      </div>
+    </div>
+  `
+}
+
+async function voteEvent(eid, status) {
+  const { data: ex } = await sb.from('event_votes').select('id').eq('event_id', eid).eq('user_id', currentUser.id).maybeSingle()
+  if (ex) await sb.from('event_votes').update({ status }).eq('id', ex.id)
+  else await sb.from('event_votes').insert({ event_id: eid, user_id: currentUser.id, status })
+  await loadPlan()
+  toast(status === 'yes' ? 'Idem! ✓' : 'Nejdem ✗')
+}
+
+async function addEvent() {
+  const name = document.getElementById('evName').value.trim()
+  const emoji = document.getElementById('evEmoji').value.trim() || '📅'
+  const date = document.getElementById('evDate').value
+  const loc = document.getElementById('evLoc').value.trim()
+  if (!name) { toast('Zadaj názov!'); return }
+  const btn = document.getElementById('evBtn')
+  btn.classList.add('loading'); btn.disabled = true
+  const { error } = await sb.from('events').insert({ group_id: currentGroupId, title: name, emoji, date_time: date || null, location: loc || null, created_by: currentUser.id })
+  btn.classList.remove('loading'); btn.disabled = false
+  if (error) { toast('Chyba: ' + error.message); return }
+  closeMo('moEvent')
+  document.getElementById('evName').value = ''
+  document.getElementById('evEmoji').value = ''
+  document.getElementById('evDate').value = ''
+  document.getElementById('evLoc').value = ''
+  await loadPlan()
+  toast('Akcia pridaná! 🎉')
+}
+
+// ── EXPENSES
+async function loadExpenses() {
+  const { data: exps } = await sb.from('expenses').select('*, pp:profiles!paid_by(*)').eq('group_id', currentGroupId).order('created_at', { ascending: false })
+  const list = exps || []
+  const total = list.reduce((s, e) => s + Number(e.amount), 0)
+  let iGet = 0, iOwe = 0
+  list.forEach(e => {
+    const pp = Number(e.amount) / (e.split_between?.length || 1)
+    if (e.paid_by === currentUser.id) iGet += (e.split_between?.filter(u => u !== currentUser.id)?.length || 0) * pp
+    else if (e.split_between?.includes(currentUser.id)) iOwe += pp
+  })
+  document.getElementById('exContent').innerHTML = `
+    <div class="exp-stats">
+      <div class="exp-stat"><div class="exp-stat-lbl">Celkom</div><div class="exp-stat-val">${total.toFixed(2)} €</div></div>
+      <div class="exp-stat"><div class="exp-stat-lbl">Dostaneš</div><div class="exp-stat-val g">+${iGet.toFixed(2)} €</div></div>
+      <div class="exp-stat"><div class="exp-stat-lbl">Dlžíš</div><div class="exp-stat-val r">${iOwe.toFixed(2)} €</div></div>
+    </div>
+    <div class="sec">Výdavky</div>
+    ${list.length === 0 ? '<div class="empty"><i class="ti ti-coins"></i><p>Žiadne výdavky.</p></div>' : list.map(renderExpItem).join('')}
+    <button class="add-btn" onclick="openMoExpense()"><i class="ti ti-plus"></i>Pridať výdavok</button>
+    ${iOwe > 0.01 ? `<div class="sec">Čo dlžíš</div><div class="debt-row"><div class="debt-text">Celkovo dlžíš <b>${iOwe.toFixed(2)} €</b></div><button class="settle-btn" onclick="toast('Vyrovnanie čoskoro 💸')">Vyrovnať</button></div>` : ''}
+  `
+}
+
+function renderExpItem(e) {
+  const ico = { drink:'🍺', food:'🍕', transport:'🚗', entertainment:'🎟️', accommodation:'🛏️', other:'📦' }
+  const bg  = { drink:'rgba(99,91,255,.15)', food:'rgba(249,115,22,.12)', transport:'rgba(34,197,94,.12)', entertainment:'rgba(245,158,11,.12)', accommodation:'rgba(239,68,68,.12)', other:'var(--c4)' }
+  const cat = e.category || 'other'
+  const who = e.pp?.first_name || e.pp?.full_name || 'Niekto'
+  const pp = (Number(e.amount) / (e.split_between?.length || 1)).toFixed(2)
+  const isMe = e.paid_by === currentUser.id
+  return `
+    <div class="exp-item">
+      <div class="exp-ico" style="background:${bg[cat]}">${ico[cat]||'📦'}</div>
+      <div class="exp-info">
+        <div class="exp-name">${e.name}</div>
+        <div class="exp-who">${who}${isMe ? ' (ty)' : ''} · ${new Date(e.created_at).toLocaleDateString('sk')}</div>
+      </div>
+      <div>
+        <div class="exp-amt">${Number(e.amount).toFixed(2)} €</div>
+        <div class="exp-per">${pp}/os</div>
+      </div>
+    </div>
+  `
+}
+
+function openMoExpense() {
+  document.getElementById('expSplit').innerHTML = '<option value="all">Všetkým rovnomerne</option>' +
+    groupMembers.map(m => `<option value="${m.user_id}">${m.profiles?.full_name || m.profiles?.first_name || m.user_id}</option>`).join('')
+  openMo('moExpense')
+}
+
+async function addExpense() {
+  const name = document.getElementById('expName').value.trim()
+  const amount = parseFloat(document.getElementById('expAmount').value)
+  const category = document.getElementById('expCat').value
+  if (!name) { toast('Zadaj popis!'); return }
+  if (isNaN(amount) || amount <= 0) { toast('Zadaj platnú sumu!'); return }
+  const sv = document.getElementById('expSplit').value
+  const split = sv === 'all' ? groupMembers.map(m => m.user_id) : [sv, currentUser.id].filter(Boolean)
+  const btn = document.getElementById('expBtn')
+  btn.classList.add('loading'); btn.disabled = true
+  const { error } = await sb.from('expenses').insert({ group_id: currentGroupId, name, amount, category, paid_by: currentUser.id, split_between: split })
+  btn.classList.remove('loading'); btn.disabled = false
+  if (error) { toast('Chyba: ' + error.message); return }
+  closeMo('moExpense')
+  document.getElementById('expName').value = ''
+  document.getElementById('expAmount').value = ''
+  await loadExpenses()
+  await loadOverview()
+  toast('Výdavok pridaný! 💸')
+}
+
+// ── TIMELINE
+async function loadTimeline() {
+  const { data: mems } = await sb.from('memories')
+    .select('*, photos:memory_photos(*), likes:memory_likes(*), creator:profiles!created_by(*)')
+    .eq('group_id', currentGroupId)
+    .order('event_date', { ascending: false })
+
+  const list = mems || []
+  const EMOJIS = ['🎉','🍺','🎳','🏖️','🎂','🎬','🎤','⚽','🏕️','🎊','🌄','🍕']
+
+  // group by month
+  const grouped = {}
+  list.forEach(m => {
+    const d = m.event_date ? new Date(m.event_date) : new Date(m.created_at)
+    const key = d.toLocaleDateString('sk', { month: 'long', year: 'numeric' })
+    if (!grouped[key]) grouped[key] = []
+    grouped[key].push(m)
+  })
+
+  let html = ''
+  if (!list.length) {
+    html = `<div class="empty"><i class="ti ti-photo"></i><p>Žiadne spomienky. Pridaj prvú!</p></div>`
+  } else {
+    Object.entries(grouped).forEach(([month, items]) => {
+      html += `<div class="tl-month">${month}</div>`
+      items.forEach((m, idx) => {
+        const photos = m.photos || []
+        const likeCount = m.likes?.length || 0
+        const myLike = m.likes?.find(l => l.user_id === currentUser.id)
+        const [p1, p2, p3] = photos
+        html += `
+          <div class="mem-card">
+            <div class="mem-photos">
+              <div class="ph-main" onclick="toast('Fotka 🖼️')">
+                ${p1?.url ? `<img src="${p1.url}" alt="">` : `<span>${EMOJIS[idx % EMOJIS.length]}</span>`}
+              </div>
+              <div class="ph-side">
+                <div class="ph-sm" onclick="toast('Fotka 🖼️')">
+                  ${p2?.url ? `<img src="${p2.url}" alt="">` : '<span>📸</span>'}
+                </div>
+                <div class="ph-add" onclick="openAddPhotoToMemory('${m.id}')">
+                  <i class="ti ti-plus" style="font-size:18px"></i>
+                  <span style="font-size:10px">Pridať</span>
+                </div>
+              </div>
+            </div>
+            <div class="mem-info">
+              <div class="mem-name">${m.title}</div>
+              <div class="mem-meta">
+                <span>📅 ${m.event_date ? new Date(m.event_date).toLocaleDateString('sk') : '—'}</span>
+                <span>📸 ${photos.length} fotiek</span>
+                <span>❤️ ${likeCount}</span>
+              </div>
+              ${m.description ? `<div style="font-size:12px;color:var(--t3);margin-bottom:8px">${m.description}</div>` : ''}
+              <div class="mem-actions">
+                <button class="mem-btn" onclick="openAddPhotoToMemory('${m.id}')"><i class="ti ti-camera-plus" style="font-size:13px"></i>Pridať fotku</button>
+                <button class="mem-btn ${myLike ? 'liked' : ''}" id="lk-${m.id}" onclick="toggleLike('${m.id}','lk-${m.id}')"><i class="ti ti-heart" style="font-size:13px"></i>${likeCount > 0 ? likeCount : 'Páči sa'}</button>
+                <button class="mem-btn" onclick="shareMemory('${m.id}')"><i class="ti ti-share" style="font-size:13px"></i>Zdieľať</button>
+              </div>
+            </div>
+          </div>
+        `
+      })
+    })
+  }
+  html += `<button class="add-btn" onclick="openMo('moMemory')"><i class="ti ti-camera-plus"></i>Pridať spomienku</button>`
+  document.getElementById('tlContent').innerHTML = html
+}
+
+// photo upload helpers
+function handleDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('over') }
+function handleDragLeave() { document.getElementById('dropZone').classList.remove('over') }
+function handleDrop(e) {
+  e.preventDefault(); document.getElementById('dropZone').classList.remove('over')
+  addPhotoPreviews(Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')))
+}
+function handlePhotoSelect(e) { addPhotoPreviews(Array.from(e.target.files)); e.target.value = '' }
+function addPhotoPreviews(files) {
+  files.forEach(file => {
+    if (file.size > 5 * 1024 * 1024) { toast(`${file.name} je príliš veľká`); return }
+    const idx = pendingPhotos.push(file) - 1
+    const reader = new FileReader()
+    reader.onload = ev => {
+      const g = document.getElementById('previewGrid')
+      const d = document.createElement('div')
+      d.className = 'preview-item'; d.dataset.idx = idx
+      d.innerHTML = `<img src="${ev.target.result}"><button class="preview-rm" onclick="removePreview(${idx})">×</button>`
+      g.appendChild(d)
+    }
+    reader.readAsDataURL(file)
+  })
+}
+function removePreview(idx) { pendingPhotos[idx] = null; document.querySelector(`.preview-item[data-idx="${idx}"]`)?.remove() }
+function clearPreviews() { pendingPhotos = []; document.getElementById('previewGrid').innerHTML = '' }
+
+async function addMemory() {
+  const title = document.getElementById('memTitle').value.trim()
+  const date = document.getElementById('memDate').value
+  const desc = document.getElementById('memDesc').value.trim()
+  if (!title) { toast('Zadaj názov spomienky!'); return }
+  const btn = document.getElementById('memBtn')
+  btn.classList.add('loading'); btn.disabled = true; btn.textContent = 'Ukladám...'
+  const { data: mem, error } = await sb.from('memories').insert({ group_id: currentGroupId, title, event_date: date || null, description: desc || null, created_by: currentUser.id }).select().single()
+  if (error) { toast('Chyba: ' + error.message); btn.classList.remove('loading'); btn.disabled = false; btn.textContent = 'Uložiť spomienku'; return }
+  const photos = pendingPhotos.filter(Boolean)
+  for (let i = 0; i < photos.length; i++) {
+    btn.textContent = `Fotky ${i + 1}/${photos.length}...`
+    const f = photos[i], ext = f.name.split('.').pop()
+    const path = `${currentGroupId}/${mem.id}/${Date.now()}_${i}.${ext}`
+    const { error: upErr } = await sb.storage.from('memories').upload(path, f)
+    if (upErr) continue
+    const { data: { publicUrl } } = sb.storage.from('memories').getPublicUrl(path)
+    await sb.from('memory_photos').insert({ memory_id: mem.id, url: publicUrl, uploaded_by: currentUser.id })
+  }
+  btn.classList.remove('loading'); btn.disabled = false; btn.textContent = 'Uložiť spomienku'
+  closeMo('moMemory')
+  document.getElementById('memTitle').value = ''
+  document.getElementById('memDate').value = ''
+  document.getElementById('memDesc').value = ''
+  clearPreviews()
+  await loadTimeline()
+  toast(`"${title}" uložená! 📸`)
+}
+
+function openAddPhotoToMemory(memId) {
+  const input = document.createElement('input')
+  input.type = 'file'; input.accept = 'image/*'; input.multiple = true
+  input.onchange = async e => {
+    const files = Array.from(e.target.files)
+    for (const f of files) {
+      if (f.size > 5 * 1024 * 1024) { toast(`${f.name} je príliš veľká`); continue }
+      const ext = f.name.split('.').pop()
+      const path = `${currentGroupId}/${memId}/${Date.now()}.${ext}`
+      const { error } = await sb.storage.from('memories').upload(path, f)
+      if (error) continue
+      const { data: { publicUrl } } = sb.storage.from('memories').getPublicUrl(path)
+      await sb.from('memory_photos').insert({ memory_id: memId, url: publicUrl, uploaded_by: currentUser.id })
+    }
+    await loadTimeline()
+    toast(`Fotky pridané! 📸`)
+  }
+  input.click()
+}
+
+async function toggleLike(memId, btnId) {
+  const { data: ex } = await sb.from('memory_likes').select('id').eq('memory_id', memId).eq('user_id', currentUser.id).maybeSingle()
+  if (ex) { await sb.from('memory_likes').delete().eq('id', ex.id); toast('Like odobratý') }
+  else { await sb.from('memory_likes').insert({ memory_id: memId, user_id: currentUser.id }); toast('❤️ Páči sa mi!') }
+  await loadTimeline()
+}
+
+async function shareMemory(memId) {
+  const url = `${window.location.origin}/app.html?memory=${memId}`
+  await navigator.clipboard.writeText(url).catch(() => {})
+  toast('Link skopírovaný! 📋')
+}
+
+// ── BORROW
+async function loadBorrow() {
+  const { data } = await sb.from('borrowed_items')
+    .select('*, lp:profiles!lent_by(*), tp:profiles!lent_to(*)')
+    .eq('group_id', currentGroupId).eq('returned', false)
+  const list = data || []
+  const iOwe = list.filter(b => b.lent_to === currentUser.id)
+  const iLent = list.filter(b => b.lent_by === currentUser.id)
+  document.getElementById('bwContent').innerHTML = `
+    ${iOwe.length ? `<div class="sec">Ty si požičal od iných</div>${iOwe.map(b => `
+      <div class="borrow-item">
+        <div class="borrow-ico" style="background:var(--red2)">📦</div>
+        <div class="borrow-info"><div class="borrow-name">${b.name}</div><div class="borrow-sub">Od ${b.lp?.full_name||b.lp?.first_name||'niekoho'} · ${new Date(b.lent_at).toLocaleDateString('sk')}</div></div>
+        <div class="borrow-right">
+          <div class="days-badge ${daysSince(b.lent_at)>7?'days-warn':'days-ok'}">${daysSince(b.lent_at)}d</div>
+          <button class="remind-btn" onclick="markReturned('${b.id}')"><i class="ti ti-send" style="font-size:11px"></i>Vrátil som</button>
+        </div>
+      </div>`).join('')}` : ''}
+    <div class="sec">Ty si požičal iným</div>
+    ${!iLent.length ? '<div style="font-size:13px;color:var(--t3);padding:8px 0">Momentálne nič nepožičiavaš.</div>' :
+    iLent.map(b => `
+      <div class="borrow-item">
+        <div class="borrow-ico" style="background:var(--amber2)">📦</div>
+        <div class="borrow-info"><div class="borrow-name">${b.name}</div><div class="borrow-sub">${b.tp?.full_name||b.tp?.first_name||'niekomu'} · ${new Date(b.lent_at).toLocaleDateString('sk')}</div></div>
+        <div class="borrow-right">
+          <div class="days-badge ${daysSince(b.lent_at)>7?'days-warn':'days-ok'}">${daysSince(b.lent_at)}d</div>
+          <button class="remind-btn" id="rb-${b.id}" onclick="sendRemind('rb-${b.id}')"><i class="ti ti-bell" style="font-size:11px"></i>Reminder</button>
+        </div>
+      </div>`).join('')}
+    <button class="add-btn" onclick="openMo('moBorrow')"><i class="ti ti-plus"></i>Zaznamenať požičanie</button>
+  `
+}
+
+async function addBorrow() {
+  const item = document.getElementById('bwItem').value.trim()
+  const toUser = document.getElementById('bwTo').value
+  const note = document.getElementById('bwNote').value.trim()
+  if (!item) { toast('Zadaj čo požičiavaš!'); return }
+  if (!toUser) { toast('Vyber komu!'); return }
+  const btn = document.getElementById('bwBtn')
+  btn.classList.add('loading'); btn.disabled = true
+  const { error } = await sb.from('borrowed_items').insert({ group_id: currentGroupId, name: item, note, lent_by: currentUser.id, lent_to: toUser })
+  btn.classList.remove('loading'); btn.disabled = false
+  if (error) { toast('Chyba: ' + error.message); return }
+  closeMo('moBorrow')
+  document.getElementById('bwItem').value = ''
+  document.getElementById('bwNote').value = ''
+  await loadBorrow()
+  toast('Požičanie zaznamenané! 📦')
+}
+
+async function markReturned(id) {
+  await sb.from('borrowed_items').update({ returned: true, returned_at: new Date().toISOString() }).eq('id', id)
+  await loadBorrow()
+  toast('Vrátenie potvrdené! ✓')
+}
+
+function sendRemind(btnId) {
+  const btn = document.getElementById(btnId)
+  if (btn) { btn.classList.add('sent'); btn.innerHTML = '<i class="ti ti-check" style="font-size:11px"></i> Poslané' }
+  toast('Reminder poslaný 🔔')
+}
+
+// ── MEMBERS
+async function loadMembers() {
+  const clrs = ['#1a1a40','#0d2018','#2a1a10','#1a2010','#2a1520','#1a1208']
+  const tclrs = ['#635bff','#22c55e','#f97316','#8ab83a','#c47ab8','#e8a830']
+  document.getElementById('mbContent').innerHTML = groupMembers.map((m, i) => {
+    const name = m.profiles?.full_name || m.profiles?.first_name || 'Neznámy'
+    const ini = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    const isMe = m.user_id === currentUser.id
+    return `
+      <div class="member-item">
+        <div class="member-av" style="background:${clrs[i%clrs.length]};color:${tclrs[i%tclrs.length]}">${ini}</div>
+        <div>
+          <div class="member-name">${name}${isMe ? ' (ja)' : ''}</div>
+          <div class="member-sub">${isMe ? currentUser.email : 'Člen skupiny'}</div>
+        </div>
+        <div class="member-role ${m.role === 'admin' ? 'role-admin' : 'role-member'}">${m.role === 'admin' ? '👑 Admin' : 'Člen'}</div>
+      </div>
+    `
+  }).join('') + `<button class="add-btn" onclick="openMoInvite()"><i class="ti ti-user-plus"></i>Pozvať člena</button>`
+}
+
+// ── HISTORY
+async function loadHistory() {
+  const [eR, evR, bR] = await Promise.all([
+    sb.from('expenses').select('*, p:profiles!paid_by(*)').eq('group_id', currentGroupId).order('created_at', { ascending: false }).limit(10),
+    sb.from('events').select('*, p:profiles!created_by(*)').eq('group_id', currentGroupId).order('created_at', { ascending: false }).limit(5),
+    sb.from('borrowed_items').select('*, p:profiles!lent_by(*)').eq('group_id', currentGroupId).order('lent_at', { ascending: false }).limit(5),
+  ])
+  const all = [
+    ...(eR.data||[]).map(e => ({ time: e.created_at, n: e.p?.first_name||e.p?.full_name||'Niekto', txt: `pridal výdavok <b>${e.name} — ${Number(e.amount).toFixed(2)} €</b>` })),
+    ...(evR.data||[]).map(e => ({ time: e.created_at, n: e.p?.first_name||e.p?.full_name||'Niekto', txt: `navrhol akciu <b>${e.emoji||'📅'} ${e.title}</b>` })),
+    ...(bR.data||[]).map(b => ({ time: b.lent_at, n: b.p?.first_name||b.p?.full_name||'Niekto', txt: `zaznamenal požičanie <b>${b.name}</b>` })),
+  ].sort((a, b) => new Date(b.time) - new Date(a.time))
+  if (!all.length) { document.getElementById('hiContent').innerHTML = '<div class="empty"><i class="ti ti-history"></i><p>Žiadna aktivita.</p></div>'; return }
+  document.getElementById('hiContent').innerHTML = `<div class="card" style="padding:12px 14px">${
+    all.map(x => `<div class="hist-item"><div class="hist-av">${(x.n[0]||'?').toUpperCase()}</div><div class="hist-text"><b>${x.n}</b> ${x.txt}</div><div class="hist-time">${timeAgo(x.time)}</div></div>`).join('')
+  }</div>`
+}
+
+// ── INVITE
+async function openMoInvite() {
+  openMo('moInvite')
+  document.getElementById('inviteLink').textContent = 'Generujem...'
+  document.getElementById('inviteCode').textContent = '...'
+  const { data: ex } = await sb.from('invites').select('code').eq('group_id', currentGroupId).gt('expires_at', new Date().toISOString()).order('created_at', { ascending: false }).limit(1).maybeSingle()
+  let code = ex?.code
+  if (!code) {
+    const { data: nw } = await sb.from('invites').insert({ group_id: currentGroupId, created_by: currentUser.id }).select('code').single()
+    code = nw?.code
+  }
+  const link = `${window.location.origin}/app.html?invite=${code}`
+  document.getElementById('inviteLink').textContent = link
+  document.getElementById('inviteCode').textContent = code || '---'
+}
+
+async function copyInviteLink() {
+  const link = document.getElementById('inviteLink').textContent
+  try { await navigator.clipboard.writeText(link); toast('Link skopírovaný! 📋') }
+  catch { toast('Skopíruj manuálne') }
+}
+
+async function joinViaInvite(code) {
+  const { data: inv } = await sb.from('invites').select('*, groups(*)').eq('code', code.toUpperCase()).maybeSingle()
+  if (!inv) { toast('Neplatná pozvánka.'); return }
+  const { data: ex } = await sb.from('group_members').select('id').eq('group_id', inv.group_id).eq('user_id', currentUser.id).maybeSingle()
+  if (!ex) {
+    await sb.from('group_members').insert({ group_id: inv.group_id, user_id: currentUser.id, role: 'member' })
+    toast(`Pridal si sa do "${inv.groups?.name}"! 🎉`)
+  } else { toast(`Už si v "${inv.groups?.name}"`) }
+  await loadGroups()
+  window.history.replaceState({}, '', '/app.html')
+  if (inv.group_id) setTimeout(() => goGroupCard(inv.group_id), 500)
+}
+
+// ── LOGOUT
+async function doLogout() {
+  await sb.auth.signOut()
+  window.location.href = 'index.html'
+}
+
+// ── HELPERS
+function daysSince(d) { return Math.floor((Date.now() - new Date(d)) / 86400000) }
+function timeAgo(d) {
+  const s = Math.floor((Date.now() - new Date(d)) / 1000)
+  if (s < 60) return 'teraz'
+  if (s < 3600) return `${Math.floor(s/60)}m`
+  if (s < 86400) return `${Math.floor(s/3600)}h`
+  if (s < 604800) return `${Math.floor(s/86400)}d`
+  return new Date(d).toLocaleDateString('sk')
+}
+function cycleAvail(el) { const s = ['✅','⏳','❌']; el.textContent = s[(s.indexOf(el.textContent)+1)%3] }
+
+// ── MODALS
+function openMo(id) { document.getElementById(id)?.classList.add('open') }
+function closeMo(id) { document.getElementById(id)?.classList.remove('open') }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.mo.open').forEach(m => m.classList.remove('open')) })
+
+// ── TOAST
+let toastTimer
+function toast(msg) {
+  const el = document.getElementById('toastEl')
+  el.textContent = msg; el.classList.add('show')
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800)
+}
+
+init()
+</script>
+</body>
+</html>
