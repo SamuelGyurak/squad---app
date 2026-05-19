@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Squad App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#090909;--bg2:#111;--bg3:#181818;--bg4:#222;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
+  --text:#f0ede8;--muted:#7a7670;--hint:#333;
+  --purple:#7c6ff7;--purple2:#a99ff9;--purple-dim:rgba(124,111,247,0.12);
+  --teal:#2ec4a0;--teal-dim:rgba(46,196,160,0.1);
+  --coral:#f06842;--coral-dim:rgba(240,104,66,0.1);
+  --amber:#e8a830;--amber-dim:rgba(232,168,48,0.1);
+  --red:#e57373;--red-dim:rgba(229,115,115,0.1);
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.5;overflow:hidden}
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sb-logo{padding:18px 16px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.sb-mark{width:30px;height:30px;background:var(--purple);border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:15px;color:#fff;flex-shrink:0}
+.sb-wordmark{font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:17px;color:var(--text)}
+.sb-wordmark span{color:var(--purple)}
+.sb-sec{padding:10px 8px 2px}
+.sb-sec-lbl{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:0 8px;margin-bottom:3px}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:500;transition:all .15s;margin-bottom:1px;border:none;background:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif}
+.sb-item:hover{background:var(--bg3);color:var(--text)}
+.sb-item.active{background:var(--purple-dim);color:var(--purple2)}
+.sb-item i{font-size:15px;width:16px;text-align:center;flex-shrink:0}
+.sb-group{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;cursor:pointer;color:var(--muted);font-size:13px;transition:all .15s;margin-bottom:1px;border:none;background:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif}
+.sb-group:hover{background:var(--bg3);color:var(--text)}
+.sb-group.active{background:var(--bg3);color:var(--text);font-weight:500}
+.g-ico-sm{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;background:var(--bg4)}
+.sb-add{display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:9px;cursor:pointer;color:var(--muted);font-size:12px;transition:all .15s;margin:4px 8px;border:1px dashed var(--border2);background:none;width:calc(100% - 16px);text-align:left;font-family:'DM Sans',sans-serif}
+.sb-add:hover{border-color:var(--purple);color:var(--purple);background:var(--purple-dim)}
+.sb-bottom{margin-top:auto;padding:10px 8px;border-top:1px solid var(--border)}
+.up-btn{width:100%;padding:8px;background:var(--purple-dim);border:1px solid rgba(124,111,247,0.2);border-radius:9px;color:var(--purple2);font-size:12px;font-weight:600;font-family:'Familjen Grotesk',sans-serif;cursor:pointer;transition:all .2s;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:5px}
+.up-btn:hover{background:var(--purple);color:#fff;border-color:var(--purple)}
+.user-row{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:9px;cursor:pointer;transition:background .15s}
+.user-row:hover{background:var(--bg3)}
+.u-av{width:28px;height:28px;border-radius:50%;background:var(--purple-dim);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--purple2);flex-shrink:0}
+.u-name{font-size:13px;font-weight:500;color:var(--text)}
+.u-email{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{padding:0 22px;height:54px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tb-title{font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:16px;color:var(--text)}
+.tb-sub{font-size:11px;color:var(--muted)}
+.tb-right{display:flex;align-items:center;gap:7px}
+.ic-btn{width:32px;height:32px;border-radius:8px;background:transparent;border:1px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:15px;transition:all .15s;position:relative}
+.ic-btn:hover{background:var(--bg3);color:var(--text)}
+.prim-btn{padding:7px 14px;background:var(--purple);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;font-family:'Familjen Grotesk',sans-serif;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap}
+.prim-btn:hover{background:#6a5ee8}
+.prim-btn.loading{opacity:.7;pointer-events:none}
+.content{flex:1;overflow-y:auto;padding:22px}
+.screen{display:none;animation:fi .18s ease}
+.screen.active{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── TABS ── */
+.ptabs{display:flex;gap:2px;background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:3px;margin-bottom:20px;overflow-x:auto;width:fit-content;max-width:100%}
+.ptabs::-webkit-scrollbar{display:none}
+.ptab{padding:6px 14px;border-radius:7px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:transparent;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.ptab:hover{color:var(--text)}
+.ptab.active{background:var(--bg4);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,0.4)}
+.ptab i{font-size:13px}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:13px;padding:16px;margin-bottom:10px}
+.c-title{font-family:'Familjen Grotesk',sans-serif;font-weight:600;font-size:14px;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.c-title i{font-size:15px;color:var(--purple)}
+.sec-lbl{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:18px 0 8px}
+.sec-lbl:first-child{margin-top:0}
+.add-btn{width:100%;padding:9px;border:1.5px dashed var(--border2);border-radius:9px;background:transparent;color:var(--muted);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s;font-family:'DM Sans',sans-serif;margin-top:4px}
+.add-btn:hover{border-color:var(--purple);color:var(--purple);background:var(--purple-dim)}
+
+/* ── HOME ── */
+.greeting h2{font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:24px;color:var(--text);margin-bottom:3px}
+.greeting p{font-size:13px;color:var(--muted);margin-bottom:20px}
+.g-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:20px}
+.g-card{background:var(--bg2);border:1px solid var(--border);border-radius:13px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.g-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;background:var(--ac,var(--purple))}
+.g-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.3)}
+.g-card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.g-card-ico{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px;background:var(--bg3)}
+.g-card-badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:100px;background:var(--bg3);color:var(--muted)}
+.g-card-name{font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:15px;color:var(--text);margin-bottom:3px}
+.g-card-meta{font-size:11px;color:var(--muted);margin-bottom:12px}
+.g-card-stats{font-size:11px;color:var(--muted)}
+.new-g-card{background:transparent;border:1.5px dashed var(--border2);border-radius:13px;padding:16px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:120px;color:var(--muted);font-size:13px}
+.new-g-card:hover{border-color:var(--purple);color:var(--purple);background:var(--purple-dim)}
+.new-g-card i{font-size:22px}
+
+/* ── ACTIVITY ── */
+.act-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.act-item:last-child{border-bottom:none}
+.act-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;background:var(--bg3);color:var(--muted)}
+.act-text{flex:1;font-size:13px;color:var(--text);line-height:1.5}
+.act-text b{font-weight:600}
+.act-time{font-size:11px;color:var(--muted);margin-top:1px}
+
+/* ── GROUP HEADER ── */
+.g-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:13px}
+.g-header-ico{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--bg3);flex-shrink:0}
+.g-header-name{font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:18px;color:var(--text)}
+.g-header-meta{font-size:12px;color:var(--muted);margin-top:1px}
+.g-avs{display:flex;margin-top:5px}
+.g-av{width:22px;height:22px;border-radius:50%;border:2px solid var(--bg2);margin-left:-5px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700}
+.g-av:first-child{margin-left:0}
+
+/* ── VOTE / PLAN ── */
+.v-opt{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border:1.5px solid var(--border);border-radius:9px;margin-bottom:7px;cursor:pointer;transition:all .18s}
+.v-opt:hover{border-color:var(--purple);background:rgba(124,111,247,0.05)}
+.v-opt.voted{border-color:var(--purple);background:rgba(124,111,247,0.07)}
+.v-name-text{font-size:13px;font-weight:500;color:var(--text)}
+.v-sub{font-size:11px;color:var(--muted)}
+.v-bar{height:3px;background:var(--hint);border-radius:2px;width:52px;overflow:hidden}
+.v-fill{height:100%;background:var(--purple);border-radius:2px;transition:width .3s}
+.v-cnt{font-size:11px;color:var(--muted);min-width:14px;text-align:right}
+.v-chk{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .18s;flex-shrink:0;color:transparent}
+.v-opt.voted .v-chk{background:var(--purple);border-color:var(--purple);color:#fff}
+.avail-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;text-align:center;margin-top:8px}
+.av-name{font-size:10px;color:var(--muted);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.av-st{font-size:17px;cursor:pointer;transition:transform .15s}
+.av-st:hover{transform:scale(1.2)}
+
+/* ── EXPENSES ── */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
+.sbox{background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:12px}
+.sbox-lbl{font-size:10px;color:var(--muted);margin-bottom:3px}
+.sbox-val{font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:20px;color:var(--text)}
+.sbox-val.g{color:var(--teal)}.sbox-val.r{color:var(--red)}
+.e-item{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg2);border:1px solid var(--border);border-radius:9px;margin-bottom:7px;cursor:pointer;transition:border-color .15s}
+.e-item:hover{border-color:var(--border2)}
+.e-ico{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.e-info{flex:1}
+.e-name{font-size:13px;font-weight:500;color:var(--text)}
+.e-who{font-size:11px;color:var(--muted)}
+.e-amt{font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:14px;color:var(--text);text-align:right}
+.e-per{font-size:10px;color:var(--muted);text-align:right}
+.debt-row{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:var(--bg3);border-radius:9px;margin-bottom:7px}
+.debt-text{font-size:13px;color:var(--text)}
+.debt-text b{color:var(--red)}
+.pay-btn{font-size:11px;padding:4px 12px;background:var(--teal-dim);color:var(--teal);border:1px solid rgba(46,196,160,0.2);border-radius:100px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.pay-btn:hover{background:var(--teal);color:#fff}
+.pay-btn.done{background:var(--bg4);color:var(--muted);border-color:var(--border);cursor:default}
+
+/* ── TIMELINE / MEMORIES ── */
+.tl-month{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:18px 0 8px}
+.mem-card{background:var(--bg2);border:1px solid var(--border);border-radius:13px;overflow:hidden;margin-bottom:10px;transition:border-color .2s}
+.mem-card:hover{border-color:var(--border2)}
+.mem-photos{display:grid;grid-template-columns:2fr 1fr;gap:2px;height:150px}
+.ph-cell{display:flex;align-items:center;justify-content:center;font-size:36px;cursor:pointer;transition:filter .2s;background:var(--bg3);overflow:hidden}
+.ph-cell:hover{filter:brightness(.8)}
+.ph-cell img{width:100%;height:100%;object-fit:cover}
+.ph-cell.sm{font-size:22px}
+.ph-side{display:grid;grid-template-rows:1fr 1fr;gap:2px}
+.mem-info{padding:11px 13px}
+.mem-title{font-family:'Familjen Grotesk',sans-serif;font-weight:600;font-size:14px;color:var(--text)}
+.mem-meta{font-size:11px;color:var(--muted);margin-top:3px;display:flex;gap:10px}
+.mem-actions{display:flex;gap:6px;margin-top:8px}
+.m-btn{display:flex;align-items:center;gap:4px;font-size:11px;background:var(--bg3);border:1px solid var(--border);border-radius:100px;padding:4px 10px;cursor:pointer;color:var(--muted);font-family:'DM Sans',sans-serif;transition:all .15s}
+.m-btn:hover{border-color:var(--purple);color:var(--purple2)}
+.m-btn.liked{background:var(--coral-dim);border-color:rgba(240,104,66,0.2);color:var(--coral)}
+
+/* ── BORROW ── */
+.b-item{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg2);border:1px solid var(--border);border-radius:9px;margin-bottom:7px;transition:border-color .15s}
+.b-item:hover{border-color:var(--border2)}
+.b-ico{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.b-info{flex:1}
+.b-name{font-size:13px;font-weight:500;color:var(--text)}
+.b-sub{font-size:11px;color:var(--muted)}
+.b-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.d-badge{font-size:10px;font-weight:500;padding:2px 8px;border-radius:100px}
+.d-ok{background:var(--amber-dim);color:var(--amber)}
+.d-warn{background:var(--red-dim);color:var(--red)}
+.r-btn{font-size:11px;padding:4px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:100px;cursor:pointer;color:var(--muted);font-family:'DM Sans',sans-serif;transition:all .15s;display:flex;align-items:center;gap:3px}
+.r-btn:hover{border-color:var(--purple);color:var(--purple2)}
+.r-btn.sent{background:var(--teal-dim);color:var(--teal);border-color:rgba(46,196,160,0.2)}
+
+/* ── MEMBERS ── */
+.mem-item{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg2);border:1px solid var(--border);border-radius:9px;margin-bottom:7px}
+.m-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.m-name{font-size:13px;font-weight:500;color:var(--text)}
+.m-email{font-size:11px;color:var(--muted)}
+.m-badge{font-size:10px;font-weight:600;padding:3px 9px;border-radius:100px;margin-left:auto;flex-shrink:0}
+.ba-admin{background:var(--purple-dim);color:var(--purple2)}
+.ba-mem{background:var(--bg3);color:var(--muted)}
+
+/* ── HISTORY ── */
+.h-date{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;padding:6px 0;margin-top:6px}
+.h-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.h-item:last-child{border-bottom:none}
+.h-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;background:var(--bg3)}
+.h-text{flex:1;font-size:12px;color:var(--text);line-height:1.4}
+.h-time{font-size:10px;color:var(--muted);flex-shrink:0}
+
+/* ── OVERVIEW ── */
+.ov-stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
+.ov-s{background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:12px}
+.ov-s-lbl{font-size:10px;color:var(--muted);margin-bottom:3px}
+.ov-s-val{font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:22px;color:var(--text)}
+.ov-s-val.up{color:var(--teal)}.ov-s-val.dn{color:var(--red)}
+.ov-alert{border:1px solid rgba(46,196,160,0.2);background:var(--teal-dim);border-radius:11px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:12px}
+
+/* ── LOADING / EMPTY ── */
+.loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;color:var(--muted)}
+.loading-spinner{width:32px;height:32px;border:3px solid var(--border2);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty-state i{font-size:40px;opacity:.3;margin-bottom:12px;display:block}
+.empty-state p{font-size:14px}
+
+/* ── PHOTO UPLOAD DROP ZONE ── */
+.photo-drop{border:2px dashed var(--border2);border-radius:13px;padding:28px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px}
+.photo-drop:hover,.photo-drop.over{border-color:var(--purple);background:var(--purple-dim)}
+.photo-drop i{font-size:28px;color:var(--muted);margin-bottom:8px;display:block}
+.photo-drop p{font-size:13px;color:var(--muted)}
+.photo-preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+.photo-preview-item{aspect-ratio:1;border-radius:8px;overflow:hidden;position:relative;background:var(--bg3)}
+.photo-preview-item img{width:100%;height:100%;object-fit:cover}
+.photo-preview-item .remove-photo{position:absolute;top:3px;right:3px;width:18px;height:18px;background:rgba(0,0,0,0.7);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:#fff}
+
+/* ── MODAL ── */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:100;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.mo.open{display:flex}
+.mo-box{background:var(--bg2);border:1px solid var(--border2);border-radius:18px;width:100%;max-width:400px;animation:moin .18s ease;max-height:90vh;overflow-y:auto}
+.mo-box.wide{max-width:560px}
+@keyframes moin{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+.mo-head{padding:18px 18px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg2);z-index:1}
+.mo-title{font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:16px;color:var(--text)}
+.mo-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1;transition:color .15s}
+.mo-close:hover{color:var(--text)}
+.mo-body{padding:18px}
+.mo-field{margin-bottom:11px}
+.mo-lbl{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.mo-in,.mo-sel,.mo-ta{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:10px 13px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;transition:border-color .2s}
+.mo-in:focus,.mo-sel:focus,.mo-ta:focus{border-color:var(--purple)}
+.mo-in::placeholder,.mo-ta::placeholder{color:var(--muted)}
+.mo-ta{resize:vertical;min-height:80px}
+.mo-foot{padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:7px;justify-content:flex-end}
+.mo-btn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;transition:all .15s}
+.mo-cancel{background:var(--bg3);color:var(--muted);border:1px solid var(--border2)}
+.mo-cancel:hover{color:var(--text)}
+.mo-ok{background:var(--purple);color:#fff}
+.mo-ok:hover{background:#6a5ee8}
+.mo-ok.loading{opacity:.7;pointer-events:none}
+
+/* ── INVITE BOX ── */
+.invite-box{background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:10px 13px;display:flex;align-items:center;gap:8px}
+.invite-code{flex:1;font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace}
+.invite-copy{background:var(--purple-dim);border:1px solid rgba(124,111,247,0.25);color:var(--purple2);padding:4px 10px;border-radius:7px;font-size:11px;cursor:pointer;white-space:nowrap;border:none;font-family:'DM Sans',sans-serif;transition:all .15s}
+.invite-copy:hover{background:var(--purple);color:#fff}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(8px);background:#1a1a1a;border:1px solid var(--border2);color:var(--text);padding:10px 18px;border-radius:100px;font-size:12px;font-weight:500;opacity:0;transition:all .25s;pointer-events:none;z-index:200;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--hint);border-radius:2px}
+</style>
+</head>
+<body>
+<div class="app" id="appShell" style="display:none">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-mark">S</div>
+    <div class="sb-wordmark">squad<span>.</span></div>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-sec-lbl">Hlavná</div>
+    <button class="sb-item active" onclick="goHome(this)"><i class="ti ti-home"></i>Domov</button>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-sec-lbl">Moje skupiny</div>
+    <div id="groupsList"><div style="padding:8px 10px;font-size:12px;color:var(--muted)">Načítavam...</div></div>
+    <button class="sb-add" onclick="openMo('moNewGroup')"><i class="ti ti-plus"></i>Nová skupina</button>
+  </div>
+  <div class="sb-bottom">
+    <button class="up-btn" onclick="showToast('Presmerovujem na platbu... 💳')"><i class="ti ti-crown" style="font-size:13px"></i>Upgrade na Pro</button>
+    <div class="user-row">
+      <div class="u-av" id="userAv">?</div>
+      <div>
+        <div class="u-name" id="userName">Načítavam...</div>
+        <div class="u-email" id="userEmail"></div>
+      </div>
+    </div>
+    <button onclick="doLogout()" style="width:100%;padding:7px;margin-top:4px;background:transparent;border:1px solid var(--border2);border-radius:9px;color:var(--muted);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s" onmouseover="this.style.color='var(--red)';this.style.borderColor='rgba(229,115,115,0.3)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border2)'">
+      <i class="ti ti-logout" style="font-size:13px"></i>Odhlásiť sa
+    </button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <a href="index.html" class="ic-btn" title="Landing" style="text-decoration:none;color:var(--muted);display:inline-flex;align-items:center;justify-content:center">🏠</a>
+      <div><div class="tb-title" id="tbTitle">Domov</div><div class="tb-sub" id="tbSub">Vitaj späť 👋</div></div>
+    </div>
+    <div class="tb-right">
+      <button class="ic-btn" onclick="showToast('Funkcia hľadania čoskoro 🔍')"><i class="ti ti-search"></i></button>
+      <button class="ic-btn" onclick="showToast('Žiadne nové notifikácie')"><i class="ti ti-bell"></i></button>
+      <button class="prim-btn" id="tbBtn" onclick="openMo('moNewGroup')"><i class="ti ti-plus"></i><span id="tbBtnTxt">Nová skupina</span></button>
+    </div>
+  </div>
+  <div class="content" id="cnt">
+
+    <!-- HOME -->
+    <div id="sh" class="screen active">
+      <div class="greeting">
+        <h2 id="homeGreeting">Ahoj 👋</h2>
+        <p id="homeSubtitle">Načítavam tvoje skupiny...</p>
+      </div>
+      <div class="sec-lbl">Moje skupiny</div>
+      <div class="g-grid" id="homeGroupsGrid">
+        <div style="font-size:13px;color:var(--muted);padding:20px 0">Načítavam skupiny...</div>
+      </div>
+      <div class="sec-lbl">Posledná aktivita</div>
+      <div class="card">
+        <div class="act-item">
+          <div class="act-av">👋</div>
+          <div><div class="act-text">Vitaj v Squad! Vytvor svoju prvú skupinu alebo sa pridaj cez pozývací link.</div><div class="act-time">práve teraz</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GROUP DETAIL -->
+    <div id="sg" class="screen">
+      <div class="g-header">
+        <div class="g-header-ico" id="ghIco">👥</div>
+        <div style="flex:1">
+          <div class="g-header-name" id="ghName">Skupina</div>
+          <div class="g-header-meta" id="ghMeta">Načítavam členov...</div>
+          <div class="g-avs" id="ghAvs"></div>
+        </div>
+        <!-- ✅ OPRAVENÉ: openMoInvite() namiesto openMo('moInvite') -->
+        <button class="ic-btn" onclick="openMoInvite()"><i class="ti ti-user-plus"></i></button>
+        <button class="ic-btn" onclick="showToast('Nastavenia skupiny ⚙️')"><i class="ti ti-settings"></i></button>
+      </div>
+      <div class="ptabs" id="gTabs">
+        <button class="ptab active" onclick="gTab('ov',this)"><i class="ti ti-layout-dashboard"></i>Prehľad</button>
+        <button class="ptab" onclick="gTab('pl',this)"><i class="ti ti-calendar-event"></i>Plán</button>
+        <button class="ptab" onclick="gTab('ex',this)"><i class="ti ti-coins"></i>Výdavky</button>
+        <button class="ptab" onclick="gTab('tl',this)"><i class="ti ti-photo"></i>Spomienky</button>
+        <button class="ptab" onclick="gTab('bw',this)"><i class="ti ti-transfer"></i>Požičané</button>
+        <button class="ptab" onclick="gTab('mb',this)"><i class="ti ti-users"></i>Členovia</button>
+        <button class="ptab" onclick="gTab('hi',this)"><i class="ti ti-history"></i>História</button>
+      </div>
+      <div id="gt-ov" class="screen active"><div id="ovContent"><div class="loading-screen"><div class="loading-spinner"></div></div></div></div>
+      <div id="gt-pl" class="screen"><div id="plContent"><div class="loading-screen"><div class="loading-spinner"></div></div></div></div>
+      <div id="gt-ex" class="screen"><div id="exContent"><div class="loading-screen"><div class="loading-spinner"></div></div></div></div>
+      <div id="gt-tl" class="screen"><div id="tlContent"><div class="loading-screen"><div class="loading-spinner"></div></div></div></div>
+      <div id="gt-bw" class="screen"><div id="bwContent"><div class="loading-screen"><div class="loading-spinner"></div></div></div></div>
+      <div id="gt-mb" class="screen"><div id="mbContent"><div class="loading-screen"><div class="loading-spinner"></div></div></div></div>
+      <div id="gt-hi" class="screen"><div id="hiContent"><div class="loading-screen"><div class="loading-spinner"></div></div></div></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- SPLASH -->
+<div id="loadingSplash" style="position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:999">
+  <div style="font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:32px;color:var(--text)">squad<span style="color:var(--purple)">.</span></div>
+  <div class="loading-spinner"></div>
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<!-- ══════════════════ MODALS ══════════════════ -->
+
+<!-- Nová skupina -->
+<div class="mo" id="moNewGroup" onclick="if(event.target===this)closeMo('moNewGroup')">
+  <div class="mo-box">
+    <div class="mo-head"><div class="mo-title">Nová skupina</div><button class="mo-close" onclick="closeMo('moNewGroup')">×</button></div>
+    <div class="mo-body">
+      <div class="mo-field"><div class="mo-lbl">Emoji ikona</div><input class="mo-in" id="ngEmoji" placeholder="👥" maxlength="2" style="font-size:22px;text-align:center"></div>
+      <div class="mo-field"><div class="mo-lbl">Názov skupiny</div><input class="mo-in" id="ngName" placeholder="Piatok Gang" onkeydown="if(event.key==='Enter')createGroup()"></div>
+      <div class="mo-field"><div class="mo-lbl">Popis (voliteľné)</div><input class="mo-in" id="ngDesc" placeholder="Naša parta..."></div>
+    </div>
+    <div class="mo-foot">
+      <button class="mo-btn mo-cancel" onclick="closeMo('moNewGroup')">Zrušiť</button>
+      <button class="mo-btn mo-ok" id="ngBtn" onclick="createGroup()">Vytvoriť skupinu</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pozvať člena -->
+<div class="mo" id="moInvite" onclick="if(event.target===this)closeMo('moInvite')">
+  <div class="mo-box">
+    <div class="mo-head"><div class="mo-title">Pozvať člena</div><button class="mo-close" onclick="closeMo('moInvite')">×</button></div>
+    <div class="mo-body">
+      <div class="mo-field">
+        <div class="mo-lbl">Pozývací link</div>
+        <div class="invite-box">
+          <div id="inviteLink" class="invite-code">Generujem link...</div>
+          <button class="invite-copy" onclick="copyInviteLink()">Kopírovať</button>
+        </div>
+      </div>
+      <div style="margin-top:4px">
+        <div class="mo-lbl">Pozývací kód</div>
+        <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:12px;text-align:center">
+          <div id="inviteCode" style="font-family:monospace;font-size:22px;letter-spacing:4px;color:var(--purple2);font-weight:700">---</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);background:var(--bg3);border-radius:9px;padding:10px 13px;margin-top:10px">
+        💡 Zdieľaj link alebo kód s kamarátmi — po kliknutí sa automaticky pridajú do skupiny.
+      </div>
+    </div>
+    <div class="mo-foot"><button class="mo-btn mo-cancel" onclick="closeMo('moInvite')">Zavrieť</button></div>
+  </div>
+</div>
+
+<!-- Pridať výdavok -->
+<div class="mo" id="moExpense" onclick="if(event.target===this)closeMo('moExpense')">
+  <div class="mo-box">
+    <div class="mo-head"><div class="mo-title">Pridať výdavok</div><button class="mo-close" onclick="closeMo('moExpense')">×</button></div>
+    <div class="mo-body">
+      <div class="mo-field"><div class="mo-lbl">Popis</div><input class="mo-in" id="expName" placeholder="Večera v reštaurácii"></div>
+      <div class="mo-field"><div class="mo-lbl">Suma (€)</div><input class="mo-in" id="expAmount" type="number" step="0.01" min="0" placeholder="0.00" style="font-size:20px;font-weight:700"></div>
+      <div class="mo-field"><div class="mo-lbl">Kategória</div>
+        <select class="mo-sel" id="expCat">
+          <option value="drink">🍺 Pitie</option>
+          <option value="food">🍕 Jedlo</option>
+          <option value="transport">🚗 Doprava</option>
+          <option value="entertainment">🎟️ Zábava</option>
+          <option value="accommodation">🛏️ Ubytovanie</option>
+          <option value="other">📦 Iné</option>
+        </select>
+      </div>
+      <div class="mo-field"><div class="mo-lbl">Rozdeliť medzi</div>
+        <select class="mo-sel" id="expSplit"><option value="all">Všetkých rovnomerne</option></select>
+      </div>
+    </div>
+    <div class="mo-foot">
+      <button class="mo-btn mo-cancel" onclick="closeMo('moExpense')">Zrušiť</button>
+      <button class="mo-btn mo-ok" id="expBtn" onclick="addExpense()">Pridať výdavok</button>
+    </div>
+  </div>
+</div>
+
+<!-- Navrhnúť akciu / event -->
+<div class="mo" id="moEvent" onclick="if(event.target===this)closeMo('moEvent')">
+  <div class="mo-box">
+    <div class="mo-head"><div class="mo-title">Navrhnúť akciu</div><button class="mo-close" onclick="closeMo('moEvent')">×</button></div>
+    <div class="mo-body">
+      <div class="mo-field"><div class="mo-lbl">Emoji</div><input class="mo-in" id="evEmoji" placeholder="🎉" style="font-size:22px;text-align:center" maxlength="2"></div>
+      <div class="mo-field"><div class="mo-lbl">Názov</div><input class="mo-in" id="evName" placeholder="Bowling, Kino, Výlet..."></div>
+      <div class="mo-field"><div class="mo-lbl">Dátum a čas</div><input class="mo-in" id="evDate" type="datetime-local"></div>
+      <div class="mo-field"><div class="mo-lbl">Miesto (voliteľné)</div><input class="mo-in" id="evLocation" placeholder="Bratislava, Zoom..."></div>
+    </div>
+    <div class="mo-foot">
+      <button class="mo-btn mo-cancel" onclick="closeMo('moEvent')">Zrušiť</button>
+      <button class="mo-btn mo-ok" id="evBtn" onclick="addEvent()">Pridať akciu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ NOVÝ: Pridať spomienku (foto timeline) -->
+<div class="mo" id="moMemory" onclick="if(event.target===this)closeMo('moMemory')">
+  <div class="mo-box wide">
+    <div class="mo-head"><div class="mo-title">📸 Pridať spomienku</div><button class="mo-close" onclick="closeMo('moMemory')">×</button></div>
+    <div class="mo-body">
+      <div class="mo-field"><div class="mo-lbl">Názov akcie</div><input class="mo-in" id="memTitle" placeholder="Napr. Pivo s kamošmi, Výlet..."></div>
+      <div class="mo-field"><div class="mo-lbl">Dátum akcie</div><input class="mo-in" id="memDate" type="date"></div>
+      <div class="mo-field"><div class="mo-lbl">Popis (voliteľné)</div><textarea class="mo-ta" id="memDesc" placeholder="Čo sme robili..."></textarea></div>
+      <div class="mo-field">
+        <div class="mo-lbl">Fotky</div>
+        <!-- Drop zone pre fotky -->
+        <div class="photo-drop" id="photoDrop" onclick="document.getElementById('photoFileInput').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+          <i class="ti ti-photo-plus" style="font-size:28px;color:var(--muted);margin-bottom:8px;display:block"></i>
+          <p style="font-size:13px;color:var(--muted)">Klikni alebo pretiahni fotky sem</p>
+          <p style="font-size:11px;color:var(--hint);margin-top:4px">JPG, PNG, WEBP · max 5MB každá</p>
+        </div>
+        <input type="file" id="photoFileInput" accept="image/*" multiple style="display:none" onchange="handlePhotoSelect(event)">
+        <div class="photo-preview-grid" id="photoPreviewGrid"></div>
+      </div>
+    </div>
+    <div class="mo-foot">
+      <button class="mo-btn mo-cancel" onclick="closeMo('moMemory');clearPhotoPreview()">Zrušiť</button>
+      <button class="mo-btn mo-ok" id="memBtn" onclick="addMemory()">Uložiť spomienku</button>
+    </div>
+  </div>
+</div>
+
+<!-- Zaznamenať požičanie -->
+<div class="mo" id="moBorrow" onclick="if(event.target===this)closeMo('moBorrow')">
+  <div class="mo-box">
+    <div class="mo-head"><div class="mo-title">Zaznamenať požičanie</div><button class="mo-close" onclick="closeMo('moBorrow')">×</button></div>
+    <div class="mo-body">
+      <div class="mo-field"><div class="mo-lbl">Čo požičiavam</div><input class="mo-in" id="bwItem" placeholder="Nabíjačka, Kniha, Notebook..."></div>
+      <div class="mo-field"><div class="mo-lbl">Komu</div><select class="mo-sel" id="bwTo"><option value="">Vybrať člena...</option></select></div>
+      <div class="mo-field"><div class="mo-lbl">Poznámka (voliteľné)</div><input class="mo-in" id="bwNote" placeholder="Vrátiť do týždňa..."></div>
+    </div>
+    <div class="mo-foot">
+      <button class="mo-btn mo-cancel" onclick="closeMo('moBorrow')">Zrušiť</button>
+      <button class="mo-btn mo-ok" id="bwBtn" onclick="addBorrow()">Uložiť</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// SUPABASE
+// ══════════════════════════════════════════════
+const SUPA_URL = 'https://ntxtmyglpgtrqyhhfpmr.supabase.co'
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50eHRteWdscGd0cnF5aGhmcG1yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMTkwMzAsImV4cCI6MjA5NDY5NTAzMH0.F-EuiMd_kQ5BeQBUlRc43z2defPkg1mrathzhA3Q7p8'
+const { createClient } = supabase
+const sb = createClient(SUPA_URL, SUPA_KEY)
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let currentUser = null
+let currentProfile = null
+let currentGroupId = null
+let allGroups = []
+let groupMembers = []
+let pendingPhotos = [] // súbory čakajúce na upload
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+async function init() {
+  const { data: { session } } = await sb.auth.getSession()
+  if (!session) { window.location.href = 'index.html'; return }
+
+  currentUser = session.user
+  await loadProfile()
+  await loadGroups()
+  updateUserUI()
+
+  document.getElementById('loadingSplash').style.display = 'none'
+  document.getElementById('appShell').style.display = 'flex'
+
+  // Invite link z URL
+  const params = new URLSearchParams(window.location.search)
+  const inviteCode = params.get('invite')
+  if (inviteCode) await joinViaInvite(inviteCode)
+}
+
+async function loadProfile() {
+  const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).single()
+  if (data) currentProfile = data
+}
+
+function updateUserUI() {
+  const name = currentProfile?.full_name || currentProfile?.first_name || currentUser.email?.split('@')[0] || 'User'
+  const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  document.getElementById('userName').textContent = name
+  document.getElementById('userEmail').textContent = currentUser.email
+  document.getElementById('userAv').textContent = initials
+  document.getElementById('homeGreeting').textContent = 'Ahoj, ' + name.split(' ')[0] + ' 👋'
+}
+
+// ══════════════════════════════════════════════
+// GROUPS
+// ══════════════════════════════════════════════
+async function loadGroups() {
+  const { data, error } = await sb
+    .from('group_members')
+    .select('group_id, role, groups(*)')
+    .eq('user_id', currentUser.id)
+  if (error) { console.error(error); return }
+  allGroups = (data || []).map(d => ({ ...d.groups, myRole: d.role })).filter(g => g.id)
+  renderSidebarGroups()
+  renderHomeGroups()
+}
+
+function renderSidebarGroups() {
+  const list = document.getElementById('groupsList')
+  if (!allGroups.length) {
+    list.innerHTML = '<div style="padding:8px 10px;font-size:12px;color:var(--muted)">Žiadne skupiny</div>'
+    return
+  }
+  list.innerHTML = allGroups.map(g => `
+    <button class="sb-group" id="sbg-${g.id}" onclick="goGroup('${g.id}',this)">
+      <div class="g-ico-sm">${g.emoji || '👥'}</div>
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</span>
+    </button>
+  `).join('')
+}
+
+function renderHomeGroups() {
+  const grid = document.getElementById('homeGroupsGrid')
+  const accentColors = ['#7c6ff7','#2ec4a0','#f06842','#e8a830','#c47ab8','#3b82f6']
+  let html = allGroups.map((g, i) => `
+    <div class="g-card" style="--ac:${accentColors[i % accentColors.length]}" onclick="goGroupCard('${g.id}')">
+      <div class="g-card-head">
+        <div class="g-card-ico">${g.emoji || '👥'}</div>
+        <div class="g-card-badge">${g.myRole === 'admin' ? '👑 Admin' : 'Člen'}</div>
+      </div>
+      <div class="g-card-name">${g.name}</div>
+      <div class="g-card-meta">${g.description || 'Stlač pre detail skupiny'}</div>
+      <div class="g-card-stats">Vytvorená: ${new Date(g.created_at).toLocaleDateString('sk')}</div>
+    </div>
+  `).join('')
+  html += `<div class="new-g-card" onclick="openMo('moNewGroup')"><i class="ti ti-plus"></i><span>Vytvoriť skupinu</span></div>`
+  grid.innerHTML = html
+  const cnt = allGroups.length
+  document.getElementById('homeSubtitle').textContent =
+    cnt === 0 ? 'Vytvor svoju prvú skupinu alebo sa pridaj cez pozývací link!' :
+    cnt === 1 ? 'Máš 1 aktívnu skupinu.' : `Máš ${cnt} aktívne skupiny.`
+}
+
+async function createGroup() {
+  const name = document.getElementById('ngName').value.trim()
+  const emoji = document.getElementById('ngEmoji').value.trim() || '👥'
+  const desc = document.getElementById('ngDesc').value.trim()
+  if (!name) { showToast('Zadaj názov skupiny!'); return }
+
+  const btn = document.getElementById('ngBtn')
+  btn.classList.add('loading'); btn.disabled = true
+
+  const { data: group, error } = await sb.from('groups')
+    .insert({ name, emoji, description: desc, created_by: currentUser.id })
+    .select().single()
+
+  if (error) { showToast('Chyba: ' + error.message); btn.classList.remove('loading'); btn.disabled = false; return }
+
+  await sb.from('group_members').insert({ group_id: group.id, user_id: currentUser.id, role: 'admin' })
+
+  btn.classList.remove('loading'); btn.disabled = false
+  closeMo('moNewGroup')
+  document.getElementById('ngName').value = ''
+  document.getElementById('ngEmoji').value = ''
+  document.getElementById('ngDesc').value = ''
+
+  await loadGroups()
+  showToast(`Skupina "${name}" vytvorená! 🎉`)
+  goGroupCard(group.id)
+}
+
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+function goHome(btn) {
+  allOff()
+  if (btn) btn.classList.add('active')
+  document.getElementById('sh').classList.add('active')
+  document.getElementById('tbTitle').textContent = 'Domov'
+  document.getElementById('tbSub').textContent = 'Vitaj späť 👋'
+  document.getElementById('tbBtnTxt').textContent = 'Nová skupina'
+  document.getElementById('tbBtn').onclick = () => openMo('moNewGroup')
+  document.getElementById('cnt').scrollTop = 0
+}
+
+async function goGroup(id, btn) {
+  currentGroupId = id
+  allOff()
+  if (btn) btn.classList.add('active')
+  document.getElementById('sg').classList.add('active')
+  // Reset tabs
+  document.querySelectorAll('[id^="gt-"]').forEach(s => s.classList.remove('active'))
+  document.getElementById('gt-ov').classList.add('active')
+  document.querySelectorAll('#gTabs .ptab').forEach((b, i) => b.classList.toggle('active', i === 0))
+  document.getElementById('cnt').scrollTop = 0
+  await loadGroupDetail(id)
+  await loadGroupMembers(id)
+  await loadGroupContent('ov')
+}
+
+function goGroupCard(id) {
+  const btn = document.getElementById('sbg-' + id)
+  goGroup(id, btn)
+}
+
+function allOff() {
+  document.querySelectorAll('.sb-item,.sb-group').forEach(b => b.classList.remove('active'))
+  document.querySelectorAll('#sh,#sg').forEach(s => s.classList.remove('active'))
+}
+
+function gTab(id, btn) {
+  document.querySelectorAll('[id^="gt-"]').forEach(s => s.classList.remove('active'))
+  document.querySelectorAll('#gTabs .ptab').forEach(b => b.classList.remove('active'))
+  document.getElementById('gt-' + id)?.classList.add('active')
+  if (btn) btn.classList.add('active')
+  document.getElementById('cnt').scrollTop = 0
+  loadGroupContent(id)
+}
+
+async function loadGroupDetail(id) {
+  const group = allGroups.find(g => g.id === id)
+  if (!group) return
+  document.getElementById('ghIco').textContent = group.emoji || '👥'
+  document.getElementById('ghName').textContent = group.name
+  document.getElementById('tbTitle').textContent = group.name
+  document.getElementById('tbSub').textContent = group.description || ''
+  document.getElementById('tbBtnTxt').textContent = 'Pridať výdavok'
+  document.getElementById('tbBtn').onclick = () => openMoExpense()
+}
+
+async function loadGroupMembers(id) {
+  const { data } = await sb.from('group_members').select('*, profiles(*)').eq('group_id', id)
+  groupMembers = data || []
+  const cnt = groupMembers.length
+  document.getElementById('ghMeta').textContent = `${cnt} ${cnt === 1 ? 'člen' : cnt < 5 ? 'členovia' : 'členov'}`
+
+  const colors = ['#1a1a2e','#0d2018','#2a1a10','#1a2010','#2a1520','#1a1208']
+  const textColors = ['#7c6ff7','#2ec4a0','#f06842','#8ab83a','#c47ab8','#e8a830']
+  document.getElementById('ghAvs').innerHTML = groupMembers.slice(0, 6).map((m, i) => {
+    const name = m.profiles?.full_name || m.profiles?.first_name || '?'
+    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    return `<div class="g-av" style="background:${colors[i % colors.length]};color:${textColors[i % textColors.length]}" title="${name}">${initials}</div>`
+  }).join('')
+
+  // Naplniť select v borrow modali
+  const bwTo = document.getElementById('bwTo')
+  bwTo.innerHTML = '<option value="">Vybrať člena...</option>' +
+    groupMembers.filter(m => m.user_id !== currentUser.id).map(m => {
+      const n = m.profiles?.full_name || m.profiles?.first_name || 'Neznámy'
+      return `<option value="${m.user_id}">${n}</option>`
+    }).join('')
+}
+
+// ══════════════════════════════════════════════
+// CONTENT LOADERS
+// ══════════════════════════════════════════════
+async function loadGroupContent(tab) {
+  if (!currentGroupId) return
+  switch (tab) {
+    case 'ov': await loadOverview(); break
+    case 'pl': await loadPlan(); break
+    case 'ex': await loadExpenses(); break
+    case 'tl': await loadTimeline(); break
+    case 'bw': await loadBorrow(); break
+    case 'mb': await loadMembers(); break
+    case 'hi': await loadHistory(); break
+  }
+}
+
+// ── OVERVIEW
+async function loadOverview() {
+  const [expRes, borrowRes] = await Promise.all([
+    sb.from('expenses').select('*').eq('group_id', currentGroupId),
+    sb.from('borrowed_items').select('*, lp:profiles!lent_by(*), tp:profiles!lent_to(*)').eq('group_id', currentGroupId).eq('returned', false)
+  ])
+  const expenses = expRes.data || []
+  const borrows = borrowRes.data || []
+  const total = expenses.reduce((s, e) => s + Number(e.amount), 0)
+  let iGetBack = 0
+  expenses.forEach(e => {
+    if (e.paid_by === currentUser.id) {
+      const pp = Number(e.amount) / (e.split_between?.length || 1)
+      iGetBack += (e.split_between?.filter(uid => uid !== currentUser.id)?.length || 0) * pp
+    }
+  })
+  const myBorrows = borrows.filter(b => b.lent_to === currentUser.id)
+  document.getElementById('ovContent').innerHTML = `
+    ${iGetBack > 0.01 ? `<div class="ov-alert"><div style="font-size:20px">💰</div><div><div style="font-size:13px;font-weight:500;color:var(--teal)">Dostaneš späť ${iGetBack.toFixed(2)} €</div><div style="font-size:11px;color:var(--muted)">Celkové výdavky skupiny: ${total.toFixed(2)} €</div></div></div>` : ''}
+    <div class="ov-stats">
+      <div class="ov-s"><div class="ov-s-lbl">Celkové výdavky</div><div class="ov-s-val">${total.toFixed(2)} €</div></div>
+      <div class="ov-s"><div class="ov-s-lbl">Ty dostaneš</div><div class="ov-s-val up">+${iGetBack.toFixed(2)} €</div></div>
+    </div>
+    ${expenses.length > 0 ? `<div class="sec-lbl">Posledné výdavky</div>${expenses.slice(0, 3).map(e => renderExpenseItem(e)).join('')}` : `<div class="empty-state"><i class="ti ti-coins"></i><p>Žiadne výdavky. Pridaj prvý!</p></div>`}
+    ${myBorrows.length > 0 ? `<div class="sec-lbl">Máš požičané od iných</div>${myBorrows.slice(0, 2).map(b => `<div class="b-item"><div class="b-ico" style="background:var(--amber-dim);color:var(--amber)">📦</div><div class="b-info"><div class="b-name">${b.name}</div><div class="b-sub">Od ${b.lp?.full_name || b.lp?.first_name || 'niekoho'}</div></div><div class="d-badge ${daysSince(b.lent_at) > 7 ? 'd-warn' : 'd-ok'}">${daysSince(b.lent_at)} dní</div></div>`).join('')}` : ''}
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="prim-btn" style="flex:1;justify-content:center" onclick="openMoExpense()"><i class="ti ti-plus"></i>Pridať výdavok</button>
+      <button class="prim-btn" style="flex:1;justify-content:center;background:var(--bg3);color:var(--text)" onclick="gTab('tl',document.querySelectorAll('#gTabs .ptab')[3])"><i class="ti ti-photo"></i>Spomienky</button>
+    </div>
+  `
+}
+
+// ── PLAN / HLASOVANIE
+async function loadPlan() {
+  const { data: events } = await sb.from('events').select('*, votes:event_votes(*)').eq('group_id', currentGroupId).order('created_at', { ascending: false })
+  const evs = events || []
+  document.getElementById('plContent').innerHTML = `
+    <div class="card">
+      <div class="c-title"><i class="ti ti-calendar-event"></i>Navrhnuté akcie</div>
+      ${evs.length === 0
+        ? `<div class="empty-state" style="padding:20px 0"><i class="ti ti-calendar-event"></i><p>Žiadne akcie. Navrhni prvú!</p></div>`
+        : evs.map(e => renderEventVote(e)).join('')}
+      <button class="add-btn" onclick="openMo('moEvent')"><i class="ti ti-plus"></i>Navrhnúť akciu</button>
+    </div>
+    <div class="card">
+      <div class="c-title"><i class="ti ti-clock"></i>Kedy môžete?</div>
+      <div class="avail-grid">
+        ${groupMembers.map(m => {
+          const name = (m.profiles?.first_name || m.profiles?.full_name || '?').split(' ')[0]
+          return `<div><div class="av-name">${name}</div><div class="av-st" onclick="cycleAvail(this)">⏳</div></div>`
+        }).join('')}
+      </div>
+    </div>
+  `
+}
+
+function renderEventVote(event) {
+  const myVote = event.votes?.find(v => v.user_id === currentUser.id)
+  const yesCount = event.votes?.filter(v => v.status === 'yes').length || 0
+  const pct = groupMembers.length > 0 ? Math.round(yesCount / groupMembers.length * 100) : 0
+  const dt = event.date_time ? new Date(event.date_time).toLocaleString('sk', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Dátum neurčený'
+  return `
+    <div class="v-opt ${myVote?.status === 'yes' ? 'voted' : ''}">
+      <div style="flex:1">
+        <div class="v-name-text">${event.emoji || '📅'} ${event.title}</div>
+        <div class="v-sub">${dt}${event.location ? ' · ' + event.location : ''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:7px">
+        <div class="v-bar"><div class="v-fill" style="width:${pct}%"></div></div>
+        <div class="v-cnt">${yesCount}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <button onclick="voteEvent('${event.id}','yes')" style="font-size:11px;padding:3px 8px;background:${myVote?.status === 'yes' ? 'var(--purple)' : 'var(--bg4)'};color:${myVote?.status === 'yes' ? '#fff' : 'var(--muted)'};border:1px solid var(--border2);border-radius:100px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s">✓ Idem</button>
+        <button onclick="voteEvent('${event.id}','no')" style="font-size:11px;padding:3px 8px;background:${myVote?.status === 'no' ? 'var(--red-dim)' : 'var(--bg4)'};color:${myVote?.status === 'no' ? 'var(--red)' : 'var(--muted)'};border:1px solid var(--border2);border-radius:100px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s">✗ Nejdem</button>
+      </div>
+    </div>
+  `
+}
+
+async function voteEvent(eventId, status) {
+  const { data: ex } = await sb.from('event_votes').select('id').eq('event_id', eventId).eq('user_id', currentUser.id).maybeSingle()
+  if (ex) {
+    await sb.from('event_votes').update({ status }).eq('id', ex.id)
+  } else {
+    await sb.from('event_votes').insert({ event_id: eventId, user_id: currentUser.id, status })
+  }
+  await loadPlan()
+  showToast(status === 'yes' ? 'Idem! ✓' : 'Nejdem ✗')
+}
+
+async function addEvent() {
+  const name = document.getElementById('evName').value.trim()
+  const emoji = document.getElementById('evEmoji').value.trim() || '📅'
+  const date = document.getElementById('evDate').value
+  const location = document.getElementById('evLocation').value.trim()
+  if (!name) { showToast('Zadaj názov akcie!'); return }
+  const btn = document.getElementById('evBtn')
+  btn.classList.add('loading'); btn.disabled = true
+  const { error } = await sb.from('events').insert({ group_id: currentGroupId, title: name, emoji, date_time: date || null, location: location || null, created_by: currentUser.id })
+  btn.classList.remove('loading'); btn.disabled = false
+  if (error) { showToast('Chyba: ' + error.message); return }
+  closeMo('moEvent')
+  document.getElementById('evName').value = ''
+  document.getElementById('evEmoji').value = ''
+  document.getElementById('evDate').value = ''
+  document.getElementById('evLocation').value = ''
+  await loadPlan()
+  showToast('Akcia pridaná! 🎉')
+}
+
+// ── EXPENSES
+async function loadExpenses() {
+  const { data: expenses } = await sb.from('expenses').select('*, pp:profiles!paid_by(*)').eq('group_id', currentGroupId).order('created_at', { ascending: false })
+  const exps = expenses || []
+  const total = exps.reduce((s, e) => s + Number(e.amount), 0)
+  let iGetBack = 0, iOwe = 0
+  exps.forEach(e => {
+    const pp = Number(e.amount) / (e.split_between?.length || 1)
+    if (e.paid_by === currentUser.id) iGetBack += (e.split_between?.filter(uid => uid !== currentUser.id)?.length || 0) * pp
+    else if (e.split_between?.includes(currentUser.id)) iOwe += pp
+  })
+  document.getElementById('exContent').innerHTML = `
+    <div class="stat-row">
+      <div class="sbox"><div class="sbox-lbl">Celkom</div><div class="sbox-val">${total.toFixed(2)} €</div></div>
+      <div class="sbox"><div class="sbox-lbl">Ty dostaneš</div><div class="sbox-val g">+${iGetBack.toFixed(2)} €</div></div>
+      <div class="sbox"><div class="sbox-lbl">Ty dlžíš</div><div class="sbox-val r">${iOwe.toFixed(2)} €</div></div>
+    </div>
+    <div class="sec-lbl">Výdavky</div>
+    ${exps.length === 0 ? `<div class="empty-state"><i class="ti ti-coins"></i><p>Žiadne výdavky zatiaľ.</p></div>` : exps.map(e => renderExpenseItem(e)).join('')}
+    <button class="add-btn" onclick="openMoExpense()"><i class="ti ti-plus"></i>Pridať výdavok</button>
+    ${iOwe > 0.01 ? `<div class="sec-lbl">Čo dlžíš</div><div class="debt-row"><div class="debt-text">Celkovo dlžíš <b>${iOwe.toFixed(2)} €</b></div><button class="pay-btn" onclick="showToast('Funkcia vyrovnania čoskoro 💸')">Vyrovnať</button></div>` : ''}
+  `
+}
+
+function renderExpenseItem(e) {
+  const catIco = { drink:'🍺', food:'🍕', transport:'🚗', entertainment:'🎟️', accommodation:'🛏️', other:'📦' }
+  const catBg  = { drink:'var(--purple-dim)', food:'var(--coral-dim)', transport:'var(--teal-dim)', entertainment:'var(--amber-dim)', accommodation:'var(--red-dim)', other:'var(--bg3)' }
+  const catClr = { drink:'var(--purple)', food:'var(--coral)', transport:'var(--teal)', entertainment:'var(--amber)', accommodation:'var(--red)', other:'var(--muted)' }
+  const cat = e.category || 'other'
+  const who = e.pp?.first_name || e.pp?.full_name || 'Niekto'
+  const perPerson = (Number(e.amount) / (e.split_between?.length || 1)).toFixed(2)
+  const isMe = e.paid_by === currentUser.id
+  return `
+    <div class="e-item">
+      <div class="e-ico" style="background:${catBg[cat]};color:${catClr[cat]}">${catIco[cat]||'📦'}</div>
+      <div class="e-info"><div class="e-name">${e.name}</div><div class="e-who">${who}${isMe?' (ty)':''} · ${new Date(e.created_at).toLocaleDateString('sk')}</div></div>
+      <div><div class="e-amt">${Number(e.amount).toFixed(2)} €</div><div class="e-per">${perPerson}/os</div></div>
+    </div>
+  `
+}
+
+function openMoExpense() {
+  const splitSel = document.getElementById('expSplit')
+  splitSel.innerHTML = '<option value="all">Všetkých rovnomerne</option>' +
+    groupMembers.map(m => `<option value="${m.user_id}">${m.profiles?.full_name || m.profiles?.first_name || m.user_id}</option>`).join('')
+  openMo('moExpense')
+}
+
+async function addExpense() {
+  const name = document.getElementById('expName').value.trim()
+  const amount = parseFloat(document.getElementById('expAmount').value)
+  const category = document.getElementById('expCat').value
+  if (!name) { showToast('Zadaj popis!'); return }
+  if (isNaN(amount) || amount <= 0) { showToast('Zadaj platnú sumu!'); return }
+  const splitVal = document.getElementById('expSplit').value
+  const splitBetween = splitVal === 'all' ? groupMembers.map(m => m.user_id) : [splitVal, currentUser.id].filter(Boolean)
+  const btn = document.getElementById('expBtn')
+  btn.classList.add('loading'); btn.disabled = true
+  const { error } = await sb.from('expenses').insert({ group_id: currentGroupId, name, amount, category, paid_by: currentUser.id, split_between: splitBetween })
+  btn.classList.remove('loading'); btn.disabled = false
+  if (error) { showToast('Chyba: ' + error.message); return }
+  closeMo('moExpense')
+  document.getElementById('expName').value = ''
+  document.getElementById('expAmount').value = ''
+  await loadExpenses()
+  await loadOverview()
+  showToast('Výdavok pridaný! 💸')
+}
+
+// ── TIMELINE / MEMORIES  ✅ KOMPLETNE NOVÉ
+async function loadTimeline() {
+  const { data: memories } = await sb.from('memories')
+    .select('*, photos:memory_photos(*), likes:memory_likes(*), creator:profiles!created_by(*)')
+    .eq('group_id', currentGroupId)
+    .order('event_date', { ascending: false })
+
+  const mems = memories || []
+  const emojis = ['🎉','🍺','🎳','🏖️','🎂','🎬','🎤','⚽','🏕️','🎊','🌄','🍕']
+
+  // Zoskupiť podľa mesiaca
+  const grouped = {}
+  mems.forEach(m => {
+    const d = m.event_date ? new Date(m.event_date) : new Date(m.created_at)
+    const key = d.toLocaleDateString('sk', { month: 'long', year: 'numeric' })
+    if (!grouped[key]) grouped[key] = []
+    grouped[key].push(m)
+  })
+
+  let html = ''
+  if (mems.length === 0) {
+    html = `<div class="empty-state"><i class="ti ti-photo"></i><p>Žiadne spomienky. Pridaj prvú!</p></div>`
+  } else {
+    Object.entries(grouped).forEach(([month, items]) => {
+      html += `<div class="tl-month">${month}</div>`
+      items.forEach((m, idx) => {
+        const myLike = m.likes?.find(l => l.user_id === currentUser.id)
+        const likeCount = m.likes?.length || 0
+        const photoCount = m.photos?.length || 0
+        // Zobraziť reálne fotky alebo emoji placeholder
+        const photos = m.photos || []
+        const mainPhoto = photos[0]?.url
+        const p2 = photos[1]?.url
+        const p3 = photos[2]?.url
+        html += `
+          <div class="mem-card">
+            <div class="mem-photos">
+              <div class="ph-cell" style="background:var(--bg3)" onclick="showToast('Foto 🖼️')">
+                ${mainPhoto ? `<img src="${mainPhoto}" alt="">` : `<span style="font-size:42px">${emojis[idx % emojis.length]}</span>`}
+              </div>
+              <div class="ph-side">
+                <div class="ph-cell sm" style="background:var(--bg4)" onclick="showToast('Foto 🖼️')">
+                  ${p2 ? `<img src="${p2}" alt="">` : `<span>📸</span>`}
+                </div>
+                <div class="ph-cell sm" style="background:var(--bg3)" onclick="showToast('Foto 🖼️')">
+                  ${p3 ? `<img src="${p3}" alt="">` : `<span>✨</span>`}
+                </div>
+              </div>
+            </div>
+            <div class="mem-info">
+              <div class="mem-title">${m.title}</div>
+              <div class="mem-meta">
+                <span>📅 ${m.event_date ? new Date(m.event_date).toLocaleDateString('sk') : 'Dátum neznámy'}</span>
+                <span>📸 ${photoCount} fotiek</span>
+                <span>❤️ ${likeCount}</span>
+              </div>
+              ${m.description ? `<div style="font-size:12px;color:var(--muted);margin-top:4px">${m.description}</div>` : ''}
+              <div class="mem-actions">
+                <button class="m-btn" onclick="openAddPhotoToMemory('${m.id}')"><i class="ti ti-plus" style="font-size:11px"></i>Pridať fotku</button>
+                <button class="m-btn ${myLike ? 'liked' : ''}" id="lk-${m.id}" onclick="toggleLike('${m.id}','lk-${m.id}')"><i class="ti ti-heart" style="font-size:11px"></i>${likeCount > 0 ? likeCount : 'Páči sa'}</button>
+                <button class="m-btn" onclick="shareMemory('${m.id}')"><i class="ti ti-share" style="font-size:11px"></i>Zdieľať</button>
+              </div>
+            </div>
+          </div>
+        `
+      })
+    })
+  }
+
+  html += `<button class="add-btn" onclick="openMo('moMemory')"><i class="ti ti-camera-plus"></i>Pridať spomienku</button>`
+  document.getElementById('tlContent').innerHTML = html
+}
+
+// ── PHOTO UPLOAD HELPERS
+function handleDragOver(e) {
+  e.preventDefault()
+  document.getElementById('photoDrop').classList.add('over')
+}
+function handleDragLeave(e) {
+  document.getElementById('photoDrop').classList.remove('over')
+}
+function handleDrop(e) {
+  e.preventDefault()
+  document.getElementById('photoDrop').classList.remove('over')
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
+  addPhotoPreviews(files)
+}
+function handlePhotoSelect(e) {
+  const files = Array.from(e.target.files)
+  addPhotoPreviews(files)
+  e.target.value = '' // reset input
+}
+function addPhotoPreviews(files) {
+  files.forEach(file => {
+    if (file.size > 5 * 1024 * 1024) { showToast(`${file.name} je príliš veľká (max 5MB)`); return }
+    pendingPhotos.push(file)
+    const reader = new FileReader()
+    reader.onload = ev => {
+      const grid = document.getElementById('photoPreviewGrid')
+      const div = document.createElement('div')
+      div.className = 'photo-preview-item'
+      div.dataset.index = pendingPhotos.length - 1
+      div.innerHTML = `<img src="${ev.target.result}"><div class="remove-photo" onclick="removePhoto(${pendingPhotos.length - 1})">×</div>`
+      grid.appendChild(div)
+    }
+    reader.readAsDataURL(file)
+  })
+}
+function removePhoto(idx) {
+  pendingPhotos[idx] = null
+  document.querySelector(`.photo-preview-item[data-index="${idx}"]`)?.remove()
+}
+function clearPhotoPreview() {
+  pendingPhotos = []
+  document.getElementById('photoPreviewGrid').innerHTML = ''
+}
+
+async function addMemory() {
+  const title = document.getElementById('memTitle').value.trim()
+  const date = document.getElementById('memDate').value
+  const desc = document.getElementById('memDesc').value.trim()
+  if (!title) { showToast('Zadaj názov spomienky!'); return }
+
+  const btn = document.getElementById('memBtn')
+  btn.classList.add('loading'); btn.disabled = true
+  btn.textContent = 'Ukladám...'
+
+  // 1. Vytvor memory
+  const { data: memory, error } = await sb.from('memories').insert({
+    group_id: currentGroupId, title, event_date: date || null,
+    description: desc || null, created_by: currentUser.id
+  }).select().single()
+
+  if (error) { showToast('Chyba: ' + error.message); btn.classList.remove('loading'); btn.disabled = false; btn.textContent = 'Uložiť spomienku'; return }
+
+  // 2. Upload fotiek (ak existujú)
+  const photos = pendingPhotos.filter(Boolean)
+  if (photos.length > 0) {
+    btn.textContent = `Nahrávam fotky (0/${photos.length})...`
+    for (let i = 0; i < photos.length; i++) {
+      const file = photos[i]
+      const ext = file.name.split('.').pop()
+      const path = `${currentGroupId}/${memory.id}/${Date.now()}_${i}.${ext}`
+      const { error: upErr } = await sb.storage.from('memories').upload(path, file)
+      if (upErr) { console.error('Upload error:', upErr); continue }
+      const { data: { publicUrl } } = sb.storage.from('memories').getPublicUrl(path)
+      await sb.from('memory_photos').insert({ memory_id: memory.id, url: publicUrl, uploaded_by: currentUser.id })
+      btn.textContent = `Nahrávam fotky (${i + 1}/${photos.length})...`
+    }
+  }
+
+  btn.classList.remove('loading'); btn.disabled = false; btn.textContent = 'Uložiť spomienku'
+  closeMo('moMemory')
+  document.getElementById('memTitle').value = ''
+  document.getElementById('memDate').value = ''
+  document.getElementById('memDesc').value = ''
+  clearPhotoPreview()
+  await loadTimeline()
+  showToast(`Spomienka "${title}" uložená! 📸`)
+}
+
+// Pridať fotku k existujúcej spomienke
+function openAddPhotoToMemory(memoryId) {
+  const input = document.createElement('input')
+  input.type = 'file'; input.accept = 'image/*'; input.multiple = true
+  input.onchange = async e => {
+    const files = Array.from(e.target.files)
+    for (const file of files) {
+      if (file.size > 5 * 1024 * 1024) { showToast(`${file.name} je príliš veľká`); continue }
+      const ext = file.name.split('.').pop()
+      const path = `${currentGroupId}/${memoryId}/${Date.now()}.${ext}`
+      const { error } = await sb.storage.from('memories').upload(path, file)
+      if (error) { console.error(error); continue }
+      const { data: { publicUrl } } = sb.storage.from('memories').getPublicUrl(path)
+      await sb.from('memory_photos').insert({ memory_id: memoryId, url: publicUrl, uploaded_by: currentUser.id })
+    }
+    await loadTimeline()
+    showToast(`${files.length} fotiek pridaných! 📸`)
+  }
+  input.click()
+}
+
+async function toggleLike(memoryId, btnId) {
+  const btn = document.getElementById(btnId)
+  const { data: existing } = await sb.from('memory_likes').select('id').eq('memory_id', memoryId).eq('user_id', currentUser.id).maybeSingle()
+  if (existing) {
+    await sb.from('memory_likes').delete().eq('id', existing.id)
+    if (btn) { btn.classList.remove('liked'); showToast('Like odobratý') }
+  } else {
+    await sb.from('memory_likes').insert({ memory_id: memoryId, user_id: currentUser.id })
+    if (btn) { btn.classList.add('liked'); showToast('❤️ Páči sa mi!') }
+  }
+  await loadTimeline()
+}
+
+async function shareMemory(memoryId) {
+  const url = `${window.location.origin}/app.html?memory=${memoryId}`
+  await navigator.clipboard.writeText(url).catch(() => {})
+  showToast('Link skopírovaný! 📋')
+}
+
+// ── BORROW
+async function loadBorrow() {
+  const { data } = await sb.from('borrowed_items')
+    .select('*, lp:profiles!lent_by(*), tp:profiles!lent_to(*)')
+    .eq('group_id', currentGroupId).eq('returned', false)
+
+  const items = data || []
+  const iOwe  = items.filter(b => b.lent_to === currentUser.id)
+  const iLent = items.filter(b => b.lent_by === currentUser.id)
+
+  document.getElementById('bwContent').innerHTML = `
+    ${iOwe.length > 0 ? `
+      <div class="sec-lbl">Ty si požičal od iných</div>
+      ${iOwe.map(b => `
+        <div class="b-item">
+          <div class="b-ico" style="background:var(--red-dim);color:var(--red)">📦</div>
+          <div class="b-info"><div class="b-name">${b.name}</div><div class="b-sub">Od ${b.lp?.full_name || b.lp?.first_name || 'niekoho'} · ${new Date(b.lent_at).toLocaleDateString('sk')}</div></div>
+          <div class="b-right">
+            <div class="d-badge ${daysSince(b.lent_at) > 7 ? 'd-warn' : 'd-ok'}">${daysSince(b.lent_at)} dní</div>
+            <button class="r-btn" onclick="markReturned('${b.id}')"><i class="ti ti-send" style="font-size:11px"></i>Vrátil som</button>
+          </div>
+        </div>
+      `).join('')}
+    ` : ''}
+    <div class="sec-lbl">Ty si požičal iným</div>
+    ${iLent.length === 0
+      ? `<div style="font-size:13px;color:var(--muted);padding:8px 0">Momentálne nič nepožičiavaš.</div>`
+      : iLent.map(b => `
+        <div class="b-item">
+          <div class="b-ico" style="background:var(--amber-dim);color:var(--amber)">📦</div>
+          <div class="b-info"><div class="b-name">${b.name}</div><div class="b-sub">${b.tp?.full_name || b.tp?.first_name || 'niekomu'} · ${new Date(b.lent_at).toLocaleDateString('sk')}</div></div>
+          <div class="b-right">
+            <div class="d-badge ${daysSince(b.lent_at) > 7 ? 'd-warn' : 'd-ok'}">${daysSince(b.lent_at)} dní</div>
+            <button class="r-btn" id="rb-${b.id}" onclick="sendRemind('rb-${b.id}')"><i class="ti ti-bell" style="font-size:11px"></i>Reminder</button>
+          </div>
+        </div>
+      `).join('')}
+    <button class="add-btn" onclick="openMo('moBorrow')"><i class="ti ti-plus"></i>Zaznamenať požičanie</button>
+  `
+}
+
+async function addBorrow() {
+  const item = document.getElementById('bwItem').value.trim()
+  const toUser = document.getElementById('bwTo').value
+  const note = document.getElementById('bwNote').value.trim()
+  if (!item) { showToast('Zadaj čo požičiavaš!'); return }
+  if (!toUser) { showToast('Vyber komu požičiavaš!'); return }
+  const btn = document.getElementById('bwBtn')
+  btn.classList.add('loading'); btn.disabled = true
+  const { error } = await sb.from('borrowed_items').insert({ group_id: currentGroupId, name: item, note, lent_by: currentUser.id, lent_to: toUser })
+  btn.classList.remove('loading'); btn.disabled = false
+  if (error) { showToast('Chyba: ' + error.message); return }
+  closeMo('moBorrow')
+  document.getElementById('bwItem').value = ''
+  document.getElementById('bwNote').value = ''
+  await loadBorrow()
+  showToast('Požičanie zaznamenané! 📦')
+}
+
+async function markReturned(id) {
+  await sb.from('borrowed_items').update({ returned: true, returned_at: new Date().toISOString() }).eq('id', id)
+  await loadBorrow()
+  showToast('Vrátenie potvrdené! ✓')
+}
+
+function sendRemind(btnId) {
+  const btn = document.getElementById(btnId)
+  if (btn) { btn.classList.add('sent'); btn.innerHTML = '<i class="ti ti-check" style="font-size:11px"></i> Poslané' }
+  showToast('Reminder poslaný 🔔')
+}
+
+// ── MEMBERS
+async function loadMembers() {
+  const colors    = ['#1a1a2e','#0d2018','#2a1a10','#1a2010','#2a1520','#1a1208']
+  const textColors = ['#7c6ff7','#2ec4a0','#f06842','#8ab83a','#c47ab8','#e8a830']
+  document.getElementById('mbContent').innerHTML = groupMembers.map((m, i) => {
+    const name = m.profiles?.full_name || m.profiles?.first_name || 'Neznámy'
+    const email = m.user_id === currentUser.id ? currentUser.email : ''
+    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    const isMe = m.user_id === currentUser.id
+    return `
+      <div class="mem-item">
+        <div class="m-av" style="background:${colors[i % colors.length]};color:${textColors[i % textColors.length]}">${initials}</div>
+        <div style="flex:1"><div class="m-name">${name}${isMe ? ' (ja)' : ''}</div><div class="m-email">${email || 'Člen skupiny'}</div></div>
+        <div class="m-badge ${m.role === 'admin' ? 'ba-admin' : 'ba-mem'}">${m.role === 'admin' ? '👑 Admin' : 'Člen'}</div>
+      </div>
+    `
+  }).join('') + `<button class="add-btn" onclick="openMoInvite()"><i class="ti ti-user-plus"></i>Pozvať člena</button>`
+}
+
+// ── HISTORY
+async function loadHistory() {
+  const [expRes, evRes, bwRes] = await Promise.all([
+    sb.from('expenses').select('*, p:profiles!paid_by(*)').eq('group_id', currentGroupId).order('created_at', { ascending: false }).limit(10),
+    sb.from('events').select('*, p:profiles!created_by(*)').eq('group_id', currentGroupId).order('created_at', { ascending: false }).limit(5),
+    sb.from('borrowed_items').select('*, p:profiles!lent_by(*)').eq('group_id', currentGroupId).order('lent_at', { ascending: false }).limit(5),
+  ])
+  const all = [
+    ...(expRes.data||[]).map(e => ({ type:'expense', time:e.created_at, name:e.p?.first_name||e.p?.full_name||'Niekto', text:`pridal výdavok <b>${e.name} — ${Number(e.amount).toFixed(2)} €</b>` })),
+    ...(evRes.data||[]).map(e => ({ type:'event', time:e.created_at, name:e.p?.first_name||e.p?.full_name||'Niekto', text:`navrhol akciu <b>${e.emoji||'📅'} ${e.title}</b>` })),
+    ...(bwRes.data||[]).map(b => ({ type:'borrow', time:b.lent_at, name:b.p?.first_name||b.p?.full_name||'Niekto', text:`zaznamenal požičanie <b>${b.name}</b>` })),
+  ].sort((a, b) => new Date(b.time) - new Date(a.time))
+
+  if (!all.length) {
+    document.getElementById('hiContent').innerHTML = `<div class="empty-state"><i class="ti ti-history"></i><p>Zatiaľ žiadna aktivita.</p></div>`
+    return
+  }
+  document.getElementById('hiContent').innerHTML = `<div class="card" style="padding:12px 14px">` +
+    all.map(item => `
+      <div class="h-item">
+        <div class="h-av">${(item.name[0]||'?').toUpperCase()}</div>
+        <div class="h-text"><b>${item.name}</b> <span>${item.text}</span></div>
+        <div class="h-time">${timeAgo(item.time)}</div>
+      </div>
+    `).join('') + `</div>`
+}
+
+// ── INVITE  ✅ OPRAVENÉ: openMoInvite() je teraz definovaná
+async function openMoInvite() {
+  openMo('moInvite')
+  document.getElementById('inviteLink').textContent = 'Generujem...'
+  document.getElementById('inviteCode').textContent = '...'
+
+  // Skúsiť nájsť existujúci invite
+  const { data: existing } = await sb.from('invites')
+    .select('code').eq('group_id', currentGroupId)
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false })
+    .limit(1).maybeSingle()
+
+  let code = existing?.code
+  if (!code) {
+    const { data: newInvite, error } = await sb.from('invites')
+      .insert({ group_id: currentGroupId, created_by: currentUser.id })
+      .select('code').single()
+    if (error) { document.getElementById('inviteLink').textContent = 'Chyba pri generovaní'; return }
+    code = newInvite?.code
+  }
+
+  const link = `${window.location.origin}/app.html?invite=${code}`
+  document.getElementById('inviteLink').textContent = link
+  document.getElementById('inviteCode').textContent = code || '---'
+}
+
+async function copyInviteLink() {
+  const link = document.getElementById('inviteLink').textContent
+  try {
+    await navigator.clipboard.writeText(link)
+    showToast('Link skopírovaný! 📋')
+  } catch {
+    showToast('Nemôžem kopírovať — skopíruj manuálne')
+  }
+}
+
+async function joinViaInvite(code) {
+  const { data: invite } = await sb.from('invites').select('*, groups(*)').eq('code', code.toUpperCase()).maybeSingle()
+  if (!invite) { showToast('Neplatná alebo expirovaná pozvánka.'); return }
+  const { data: existing } = await sb.from('group_members').select('id').eq('group_id', invite.group_id).eq('user_id', currentUser.id).maybeSingle()
+  if (!existing) {
+    await sb.from('group_members').insert({ group_id: invite.group_id, user_id: currentUser.id, role: 'member' })
+    showToast(`Pridal si sa do "${invite.groups?.name}"! 🎉`)
+  } else {
+    showToast(`Už si členom skupiny "${invite.groups?.name}"`)
+  }
+  await loadGroups()
+  window.history.replaceState({}, document.title, '/app.html')
+  if (invite.group_id) setTimeout(() => goGroupCard(invite.group_id), 600)
+}
+
+// ══════════════════════════════════════════════
+// LOGOUT
+// ══════════════════════════════════════════════
+async function doLogout() {
+  await sb.auth.signOut()
+  window.location.href = 'index.html'
+}
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+function daysSince(dateStr) {
+  return Math.floor((Date.now() - new Date(dateStr)) / 86400000)
+}
+function timeAgo(dateStr) {
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000)
+  if (diff < 60) return 'práve teraz'
+  if (diff < 3600) return `pred ${Math.floor(diff / 60)} min`
+  if (diff < 86400) return `pred ${Math.floor(diff / 3600)} hod`
+  if (diff < 604800) return `pred ${Math.floor(diff / 86400)} dňami`
+  return new Date(dateStr).toLocaleDateString('sk')
+}
+function cycleAvail(el) {
+  const s = ['✅','⏳','❌']
+  el.textContent = s[(s.indexOf(el.textContent) + 1) % 3]
+}
+
+// ══════════════════════════════════════════════
+// MODALS
+// ══════════════════════════════════════════════
+function openMo(id) { document.getElementById(id)?.classList.add('open') }
+function closeMo(id) { document.getElementById(id)?.classList.remove('open') }
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.querySelectorAll('.mo.open').forEach(m => m.classList.remove('open'))
+})
+
+// ══════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════
+let toastTimer
+function showToast(msg) {
+  const t = document.getElementById('toastEl')
+  t.textContent = msg; t.classList.add('show')
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800)
+}
+
+// ══════════════════════════════════════════════
+// START
+// ══════════════════════════════════════════════
+init()
+</script>
+</body>
+</html>
