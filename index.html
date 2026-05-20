@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Squad — tvoja parta, na jednom mieste</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<!-- SUPABASE — potrebné pre auto-redirect prihláseného usera -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080808;--bg2:#0f0f0f;--bg3:#161616;--bg4:#1e1e1e;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#f0ede8;--muted:#7a7670;--hint:#3d3b38;
+  --purple:#7c6ff7;--purple2:#a99ff9;--purple-dim:rgba(124,111,247,0.12);
+  --purple-glow:rgba(124,111,247,0.25);
+  --teal:#2ec4a0;--coral:#f06842;--amber:#e8a830;--r:18px;--rs:10px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.6;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");opacity:.4;pointer-events:none;z-index:0}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 40px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(8,8,8,0.95),transparent);backdrop-filter:blur(12px)}
+.nav-logo{font-family:'Familjen Grotesk',sans-serif;font-weight:800;font-size:24px;color:var(--text);text-decoration:none;letter-spacing:-.5px}
+.nav-logo span{color:var(--purple)}
+.nav-links{display:flex;gap:32px;list-style:none}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:14px;transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.nav-auth{display:flex;align-items:center;gap:8px}
+.nav-login{color:var(--muted);text-decoration:none;font-size:14px;padding:9px 18px;border-radius:100px;border:1px solid transparent;transition:all .2s}
+.nav-login:hover{color:var(--text);border-color:var(--border2)}
+.nav-register{background:var(--purple);color:#fff;text-decoration:none;padding:10px 20px;border-radius:100px;font-size:14px;font-weight:500;transition:all .2s;cursor:pointer;border:none;font-family:'DM Sans',sans-serif}
+.nav-register:hover{background:#6a5ee8;transform:scale(1.02)}
+
+/* ── LANG ── */
+.nav-lang{position:relative;margin-right:4px}
+.nav-lang-btn{display:flex;align-items:center;gap:5px;color:var(--muted);background:none;border:1px solid var(--border2);cursor:pointer;font-family:'DM Sans',sans-serif;padding:7px 12px;border-radius:100px;font-size:13px;transition:all .2s}
+.nav-lang-btn:hover{color:var(--text);border-color:rgba(255,255,255,0.2)}
+.nav-lang-btn svg{width:13px;height:13px;opacity:.6;flex-shrink:0}
+.lang-dd{position:absolute;top:calc(100% + 8px);right:0;background:#111;border:1px solid var(--border2);border-radius:16px;padding:6px;min-width:190px;box-shadow:0 12px 40px rgba(0,0,0,0.6);display:none;z-index:200}
+.lang-dd.open{display:block;animation:langFadeIn .15s ease}
+@keyframes langFadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.lang-dd-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.lang-opt{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background .15s;font-size:13px;color:var(--muted);border:none;background:transparent;width:100%;font-family:'DM Sans',sans-serif;text-align:left;white-space:nowrap}
+.lang-opt:hover{background:var(--bg3);color:var(--text)}
+.lang-opt.active{color:var(--text);background:var(--bg3)}
+.lang-opt .lf{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.lang-opt .lc{font-size:11px;color:var(--purple2);margin-left:auto;opacity:0}
+.lang-opt.active .lc{opacity:1}
+
+/* ── HERO ── */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:140px 20px 80px;position:relative;overflow:hidden}
+.hero-glow{position:absolute;top:20%;left:50%;transform:translate(-50%,-50%);width:700px;height:700px;background:radial-gradient(circle,rgba(124,111,247,0.15) 0%,transparent 65%);pointer-events:none;animation:pulse 6s ease-in-out infinite}
+.hero-glow2{position:absolute;top:60%;left:30%;width:400px;height:400px;background:radial-gradient(circle,rgba(46,196,160,0.08) 0%,transparent 65%);pointer-events:none;animation:pulse 8s ease-in-out infinite reverse}
+@keyframes pulse{0%,100%{opacity:.7;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}}
+h1{font-family:'Familjen Grotesk',sans-serif;font-weight:800;font-size:clamp(48px,8vw,88px);line-height:1.0;letter-spacing:-2px;color:var(--text);animation:fadeUp .9s .1s ease both;position:relative;z-index:1}
+h1 em{font-style:normal;color:var(--purple)}
+.hero-sub{max-width:540px;margin:24px auto 0;color:var(--muted);font-size:18px;font-weight:300;line-height:1.7;animation:fadeUp 1s .2s ease both;position:relative;z-index:1}
+.hero-actions{display:flex;gap:12px;margin-top:40px;justify-content:center;flex-wrap:wrap;animation:fadeUp 1s .3s ease both;position:relative;z-index:1}
+.btn-primary{background:var(--purple);color:#fff;border:none;padding:14px 32px;border-radius:100px;font-size:15px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .25s;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+.btn-primary:hover{background:#6a5ee8;transform:translateY(-2px);box-shadow:0 16px 48px rgba(124,111,247,0.3)}
+.btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border2);padding:14px 32px;border-radius:100px;font-size:15px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .25s;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+.btn-secondary:hover{background:var(--bg3);border-color:var(--muted);transform:translateY(-2px)}
+.hero-stats{display:flex;gap:48px;margin-top:64px;animation:fadeUp 1s .4s ease both;flex-wrap:wrap;justify-content:center;position:relative;z-index:1}
+.stat-num{font-family:'Familjen Grotesk',sans-serif;font-weight:800;font-size:32px;color:var(--text)}
+.stat-lbl{font-size:13px;color:var(--muted);margin-top:2px}
+
+/* ── PHONE MOCKUP ── */
+.hero-phone{margin-top:72px;position:relative;animation:fadeUp 1s .5s ease both;display:flex;justify-content:center;z-index:1}
+.phone-glow-wrap{position:relative;display:inline-block}
+.phone-glow-ring{position:absolute;inset:-32px;border-radius:52px;background:transparent;border:1px solid rgba(124,111,247,0.15);animation:ringPulse 4s ease-in-out infinite}
+.phone-glow-ring2{position:absolute;inset:-64px;border-radius:80px;background:transparent;border:1px solid rgba(124,111,247,0.07);animation:ringPulse 4s .5s ease-in-out infinite}
+@keyframes ringPulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.02)}}
+.phone{width:270px;background:#111;border-radius:40px;border:1px solid rgba(255,255,255,0.1);overflow:hidden;box-shadow:0 40px 120px rgba(0,0,0,0.8),0 0 0 1px rgba(255,255,255,0.04)}
+.phone-notch{width:100px;height:24px;background:#000;border-radius:0 0 16px 16px;margin:0 auto}
+.phone-screen{background:#0d0d0d;padding:16px}
+.phn-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.phn-logo{font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:16px;color:#f0ede8}
+.phn-logo span{color:#7c6ff7}
+.phn-avs{display:flex}
+.phn-av{width:22px;height:22px;border-radius:50%;margin-left:-5px;border:1.5px solid #0d0d0d;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.phn-pill{background:#1a1a2e;border:1px solid rgba(124,111,247,0.3);border-radius:100px;padding:7px 12px;display:flex;align-items:center;gap:6px;margin-bottom:12px}
+.phn-pill-name{font-size:11px;font-weight:600;color:#c9c4f5}
+.phn-pill-meta{font-size:10px;color:#5a5670;margin-left:auto}
+.phn-card{background:#141414;border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:12px;margin-bottom:10px}
+.phn-card-title{font-size:11px;font-weight:600;color:#7a7670;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.phn-vote{background:#1a1a1a;border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:9px 10px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.phn-vote.active{border-color:rgba(124,111,247,0.5);background:#18182a}
+.phn-vote-name{font-size:11px;color:#d0cdc8;flex:1}
+.phn-bar{height:3px;background:#2a2a2a;border-radius:2px;width:40px;overflow:hidden}
+.phn-bar-fill{height:100%;background:#7c6ff7;border-radius:2px}
+.phn-vote-cnt{font-size:10px;color:#5a5670;min-width:12px;text-align:right}
+.phn-exp-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.phn-exp-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.phn-exp-name{font-size:11px;color:#d0cdc8;flex:1}
+.phn-exp-amt{font-family:'Familjen Grotesk',sans-serif;font-size:12px;font-weight:700;color:#f0ede8}
+.phn-nav{display:flex;border-top:1px solid rgba(255,255,255,0.06);padding:10px 0 6px}
+.phn-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9px;color:#3d3b38}
+.phn-nav-item.active{color:#7c6ff7}
+.phn-nav-icon{font-size:15px}
+
+/* ── SECTIONS ── */
+section{padding:100px 20px;position:relative;z-index:1}
+.container{max-width:1100px;margin:0 auto}
+.section-eyebrow{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--purple);margin-bottom:12px}
+.section-title{font-family:'Familjen Grotesk',sans-serif;font-weight:800;font-size:clamp(32px,5vw,52px);line-height:1.1;letter-spacing:-1px;color:var(--text);margin-bottom:16px}
+.section-sub{color:var(--muted);font-size:17px;font-weight:300;max-width:520px;line-height:1.7}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── FEATURES ── */
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-top:60px}
+.feature-card{background:var(--bg2);padding:36px 32px;transition:background .25s;position:relative;overflow:hidden}
+.feature-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,var(--ac-glow,rgba(124,111,247,0.06)) 0%,transparent 60%);opacity:0;transition:opacity .3s}
+.feature-card:hover{background:var(--bg3)}
+.feature-card:hover::before{opacity:1}
+.feature-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:20px;border:1px solid var(--border2)}
+.feature-icon.purple{background:rgba(124,111,247,0.12);border-color:rgba(124,111,247,0.25)}
+.feature-icon.teal{background:rgba(46,196,160,0.1);border-color:rgba(46,196,160,0.2)}
+.feature-icon.coral{background:rgba(240,104,66,0.1);border-color:rgba(240,104,66,0.2)}
+.feature-icon.amber{background:rgba(232,168,48,0.1);border-color:rgba(232,168,48,0.2)}
+.feature-name{font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:20px;color:var(--text);margin-bottom:10px}
+.feature-desc{color:var(--muted);font-size:15px;line-height:1.65;font-weight:300}
+.feature-tag{display:inline-block;margin-top:16px;font-size:11px;font-weight:500;padding:4px 12px;border-radius:100px}
+.feature-tag.purple{background:rgba(124,111,247,0.12);color:var(--purple2)}
+.feature-tag.teal{background:rgba(46,196,160,0.1);color:var(--teal)}
+.feature-tag.coral{background:rgba(240,104,66,0.1);color:var(--coral)}
+.feature-tag.amber{background:rgba(232,168,48,0.1);color:var(--amber)}
+
+/* ── SCREENSHOTS ── */
+.screenshots{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.ss-tabs{display:flex;gap:4px;background:var(--bg3);border-radius:100px;padding:4px;margin-bottom:48px;width:fit-content}
+.ss-tab{padding:9px 22px;border-radius:100px;font-size:14px;font-weight:500;cursor:pointer;color:var(--muted);border:none;background:transparent;font-family:'DM Sans',sans-serif;transition:all .2s}
+.ss-tab.active{background:var(--bg4);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,0.4)}
+.ss-panel{display:none}
+.ss-panel.active{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+@media(max-width:700px){.ss-panel.active{grid-template-columns:1fr}}
+.ss-eyebrow{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--purple);margin-bottom:10px}
+.ss-title{font-family:'Familjen Grotesk',sans-serif;font-weight:800;font-size:30px;color:var(--text);line-height:1.15;letter-spacing:-.5px;margin-bottom:14px}
+.ss-desc{color:var(--muted);font-size:15px;line-height:1.7;font-weight:300}
+.ss-points{margin-top:24px;display:flex;flex-direction:column;gap:12px}
+.ss-point{display:flex;align-items:flex-start;gap:12px}
+.ss-point-dot{width:20px;height:20px;border-radius:50%;background:var(--purple-dim);border:1px solid rgba(124,111,247,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.ss-point-dot::after{content:'';width:6px;height:6px;border-radius:50%;background:var(--purple)}
+.ss-point-text{font-size:14px;color:var(--muted);line-height:1.6}
+.ss-point-text b{color:var(--text);font-weight:500}
+.ss-mockup{background:var(--bg3);border:1px solid var(--border2);border-radius:24px;padding:24px;min-height:340px;position:relative;overflow:hidden}
+.ss-mockup::before{content:'';position:absolute;top:-60px;right:-60px;width:220px;height:220px;background:radial-gradient(circle,var(--glow-color,rgba(124,111,247,0.12)) 0%,transparent 70%)}
+.mock-row{display:flex;align-items:center;gap:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:11px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .2s}
+.mock-row:hover{border-color:var(--border2)}
+.mock-label{flex:1;font-size:13px;color:#d0cdc8;font-weight:500}
+.mock-sub{font-size:11px;color:var(--muted)}
+.mock-bar{height:4px;background:var(--hint);border-radius:2px;width:52px;overflow:hidden}
+.mock-bar-fill{height:100%;border-radius:2px}
+.mock-cnt{font-size:11px;color:var(--muted);min-width:16px;text-align:right}
+.mock-check{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.mock-check.on{background:var(--purple);color:#fff}
+.mock-check.off{background:var(--bg3);border:1px solid var(--border2);color:transparent}
+.mock-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.mock-debt{display:flex;align-items:center;justify-content:space-between;background:var(--bg4);border-radius:10px;padding:10px 14px;margin-bottom:8px}
+.mock-debt-text{font-size:13px;color:#d0cdc8}
+.mock-debt-text b{color:#e57373}
+.mock-pay{font-size:11px;background:#1e4a3a;color:#2ec4a0;border:none;border-radius:100px;padding:4px 14px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.mock-photo-grid{display:grid;grid-template-columns:2fr 1fr;gap:4px;height:140px;border-radius:12px;overflow:hidden;margin-bottom:10px}
+.mock-photo{display:flex;align-items:center;justify-content:center;font-size:36px;cursor:pointer;transition:filter .2s}
+.mock-photo:hover{filter:brightness(.8)}
+.mock-photo-sm{font-size:22px}
+.mock-photo-side{display:grid;grid-template-rows:1fr 1fr;gap:4px}
+.mock-borrow-row{display:flex;align-items:center;gap:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:11px 14px;margin-bottom:8px}
+.mock-borrow-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.mock-days{font-size:11px;padding:3px 10px;border-radius:100px;font-weight:500}
+.mock-days.warn{background:rgba(232,168,48,0.12);color:var(--amber)}
+.mock-days.danger{background:rgba(163,45,45,0.15);color:#e57373}
+
+/* ── HOW IT WORKS ── */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:32px;margin-top:64px}
+.step{text-align:center;padding:0 16px}
+.step-num{width:56px;height:56px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:'Familjen Grotesk',sans-serif;font-weight:800;font-size:20px;color:var(--purple);margin:0 auto 20px;position:relative;z-index:1}
+.step-title{font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:17px;color:var(--text);margin-bottom:8px}
+.step-desc{color:var(--muted);font-size:14px;line-height:1.65;font-weight:300}
+
+/* ── PRICING ── */
+#pricing{padding:100px 20px;background:var(--bg2);border-top:1px solid var(--border)}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:20px;overflow:hidden}
+@media(max-width:800px){.pricing-grid{grid-template-columns:1fr}}
+.price-card{background:var(--bg2);padding:36px 28px;display:flex;flex-direction:column;transition:background .2s}
+.price-card:hover{background:var(--bg3)}
+.price-card-pro{background:var(--bg3);border:2px solid var(--purple);margin:-1px;border-radius:20px;z-index:2}
+.price-card-pro:hover{background:#1a183a}
+.price-badge{display:inline-block;background:var(--purple);color:#fff;font-size:11px;font-weight:600;padding:4px 12px;border-radius:100px;margin-bottom:14px;letter-spacing:.3px}
+.price-plan{font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:18px;color:var(--text);margin-bottom:12px}
+.price-amount{display:flex;align-items:baseline;gap:2px;margin-bottom:10px}
+.price-num{font-family:'Familjen Grotesk',sans-serif;font-weight:800;font-size:48px;color:var(--text);line-height:1}
+.price-cur{font-size:22px;font-weight:600;color:var(--text);margin-left:2px}
+.price-per{font-size:14px;color:var(--muted);margin-left:4px}
+.price-desc{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6}
+.price-features{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:32px;flex:1}
+.price-features li{display:flex;align-items:center;gap:10px;font-size:14px}
+.feat-ok{color:var(--text)}
+.feat-no{color:var(--hint);text-decoration:line-through}
+.feat-ok::before{content:'✓';color:var(--teal);font-weight:700;font-size:13px;width:16px;flex-shrink:0}
+.feat-no::before{content:'×';color:var(--hint);font-weight:700;font-size:13px;width:16px;flex-shrink:0}
+.price-btn{display:block;text-align:center;padding:13px;border-radius:12px;font-size:14px;font-weight:600;font-family:'Familjen Grotesk',sans-serif;text-decoration:none;transition:all .2s;margin-top:auto;cursor:pointer;border:none}
+.price-btn-primary{background:var(--purple);color:#fff}
+.price-btn-primary:hover{background:#6a5ee8;transform:translateY(-1px)}
+.price-btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border2)}
+.price-btn-ghost:hover{border-color:var(--purple);color:var(--purple2);transform:translateY(-1px)}
+.price-note{text-align:center;font-size:13px;color:var(--muted);margin-top:32px}
+
+/* ── CTA ── */
+.waitlist{background:var(--bg2);border-top:1px solid var(--border)}
+.waitlist-inner{max-width:640px;margin:0 auto;text-align:center}
+
+/* ── FOOTER ── */
+footer{border-top:1px solid var(--border);padding:40px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;max-width:1100px;margin:0 auto}
+.footer-logo{font-family:'Familjen Grotesk',sans-serif;font-weight:800;font-size:20px;color:var(--text)}
+.footer-logo span{color:var(--purple)}
+.footer-copy{font-size:13px;color:var(--muted)}
+.footer-links{display:flex;gap:24px}
+.footer-links a{font-size:13px;color:var(--muted);text-decoration:none;transition:color .2s}
+.footer-links a:hover{color:var(--text)}
+
+/* ── REVEAL ── */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease;pointer-events:none}
+.reveal.visible{opacity:1;transform:translateY(0);pointer-events:auto}
+
+@media(max-width:640px){
+  nav{padding:16px 20px}
+  .nav-links{display:none}
+  h1{font-size:42px}
+  .hero-stats{gap:28px}
+  .features-grid{grid-template-columns:1fr}
+  footer{flex-direction:column;text-align:center}
+  .ss-tabs{flex-wrap:wrap}
+  .pricing-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="#">squad<span>.</span></a>
+  <ul class="nav-links">
+    <li><a href="#features">Funkcie</a></li>
+    <li><a href="#screenshots">Demo</a></li>
+    <li><a href="#pricing">Ceny</a></li>
+    <li><a href="#how">Ako to funguje</a></li>
+  </ul>
+  <div class="nav-auth">
+    <div class="nav-lang">
+      <button class="nav-lang-btn" onclick="toggleLangDD()" id="langBtn">
+        <span id="currentFlag">🇸🇰</span>
+        <span id="currentLangName">SK</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="lang-dd" id="langDD">
+        <div class="lang-dd-grid">
+          <button class="lang-opt active" onclick="setLang('sk')" id="lo-sk"><span class="lf">🇸🇰</span>Slovenčina<span class="lc">✓</span></button>
+          <button class="lang-opt" onclick="setLang('cs')" id="lo-cs"><span class="lf">🇨🇿</span>Čeština<span class="lc">✓</span></button>
+          <button class="lang-opt" onclick="setLang('en')" id="lo-en"><span class="lf">🇬🇧</span>English<span class="lc">✓</span></button>
+          <button class="lang-opt" onclick="setLang('de')" id="lo-de"><span class="lf">🇩🇪</span>Deutsch<span class="lc">✓</span></button>
+          <button class="lang-opt" onclick="setLang('pl')" id="lo-pl"><span class="lf">🇵🇱</span>Polski<span class="lc">✓</span></button>
+          <button class="lang-opt" onclick="setLang('hu')" id="lo-hu"><span class="lf">🇭🇺</span>Magyar<span class="lc">✓</span></button>
+          <button class="lang-opt" onclick="setLang('uk')" id="lo-uk"><span class="lf">🇺🇦</span>Українська<span class="lc">✓</span></button>
+          <button class="lang-opt" onclick="setLang('ru')" id="lo-ru"><span class="lf">🇷🇺</span>Русский<span class="lc">✓</span></button>
+          <button class="lang-opt" onclick="setLang('it')" id="lo-it"><span class="lf">🇮🇹</span>Italiano<span class="lc">✓</span></button>
+          <button class="lang-opt" onclick="setLang('es')" id="lo-es"><span class="lf">🇪🇸</span>Español<span class="lc">✓</span></button>
+          <button class="lang-opt" onclick="setLang('fr')" id="lo-fr"><span class="lf">🇫🇷</span>Français<span class="lc">✓</span></button>
+        </div>
+      </div>
+    </div>
+    <!-- ✅ OPRAVENÉ: href="login.html" -->
+    <a class="nav-login" href="login.html" id="nav-login-lnk">Prihlásiť sa</a>
+    <a class="nav-register" href="login.html" id="nav-reg-lnk">Registrácia</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <h1 id="heroTitle">Tvoja parta.<br>Jeden <em>Squad</em>.</h1>
+  <p class="hero-sub" id="heroSub">Plánuj akcie, deľ výdavky, zbieraj spomienky a nezabúdaj na požičané veci — všetko na jednom mieste pre teba a tvojich kamarátov.</p>
+  <div class="hero-actions">
+    <!-- ✅ OPRAVENÉ: href="login.html" -->
+    <a class="btn-primary" href="login.html" id="heroPrimary">Vytvoriť účet zadarmo ✦</a>
+    <a class="btn-secondary" href="#screenshots" id="heroSecondary">Pozrieť demo →</a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">10×</div><div class="stat-lbl" id="stat1">menej hádok kde ideme</div></div>
+    <div class="stat"><div class="stat-num">0 €</div><div class="stat-lbl" id="stat2">zabudnutých dlhov</div></div>
+    <div class="stat"><div class="stat-num">∞</div><div class="stat-lbl" id="stat3">spomienok uložených</div></div>
+  </div>
+  <!-- PHONE MOCKUP -->
+  <div class="hero-phone">
+    <div class="phone-glow-wrap">
+      <div class="phone-glow-ring"></div>
+      <div class="phone-glow-ring2"></div>
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phn-header">
+            <div class="phn-logo">squad<span>.</span></div>
+            <div class="phn-avs">
+              <div class="phn-av" style="background:#1a1a2e;color:#7c6ff7">TM</div>
+              <div class="phn-av" style="background:#0d2018;color:#2ec4a0">JK</div>
+              <div class="phn-av" style="background:#2a1a10;color:#f06842">PH</div>
+            </div>
+          </div>
+          <div class="phn-pill">
+            <span>👥</span>
+            <div class="phn-pill-name" id="phn-group">Meet with friends</div>
+            <div class="phn-pill-meta" id="phn-members">5 členov ▾</div>
+          </div>
+          <div class="phn-card">
+            <div class="phn-card-title" id="phn-where">Kde ideme?</div>
+            <div class="phn-vote active"><div class="phn-vote-name" id="phn-v1">Bowling</div><div class="phn-bar"><div class="phn-bar-fill" style="width:80%"></div></div><div class="phn-vote-cnt">4</div></div>
+            <div class="phn-vote"><div class="phn-vote-name" id="phn-v2">Kino</div><div class="phn-bar"><div class="phn-bar-fill" style="width:40%"></div></div><div class="phn-vote-cnt">2</div></div>
+            <div class="phn-vote"><div class="phn-vote-name" id="phn-v3">Fitko</div><div class="phn-bar"><div class="phn-bar-fill" style="width:20%"></div></div><div class="phn-vote-cnt">1</div></div>
+          </div>
+          <div class="phn-card">
+            <div class="phn-card-title" id="phn-expenses">Výdavky dnes</div>
+            <div class="phn-exp-row"><div class="phn-exp-icon" style="background:#1a1a2e;color:#7c6ff7">🍺</div><div class="phn-exp-name" id="phn-exp1">Pivo</div><div class="phn-exp-amt">62 €</div></div>
+            <div class="phn-exp-row"><div class="phn-exp-icon" style="background:#2a1a10;color:#f06842">🍕</div><div class="phn-exp-name" id="phn-exp2">Pizza</div><div class="phn-exp-amt">36 €</div></div>
+          </div>
+          <div class="phn-nav">
+            <div class="phn-nav-item active"><div class="phn-nav-icon">📅</div><span id="phn-nav1">Plán</span></div>
+            <div class="phn-nav-item"><div class="phn-nav-icon">💸</div><span id="phn-nav2">Split</span></div>
+            <div class="phn-nav-item"><div class="phn-nav-icon">📸</div><span id="phn-nav3">Foto</span></div>
+            <div class="phn-nav-item"><div class="phn-nav-icon">🔄</div><span id="phn-nav4">Požič.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-eyebrow" id="feat-eyebrow">Funkcie</div>
+      <h2 class="section-title" id="feat-title">Všetko čo tvoja parta potrebuje</h2>
+      <p class="section-sub" id="feat-sub">Žiadne prepínanie medzi Doodle, Splitwise a WhatsApp. Squad je jedno miesto pre všetko.</p>
+    </div>
+    <div class="features-grid reveal">
+      <div class="feature-card">
+        <div class="feature-icon purple">📅</div>
+        <div class="feature-name" id="feat1-name">Plánuj bez hádok</div>
+        <div class="feature-desc" id="feat1-desc">Navrhni termíny a miesta, každý zahlasuje. Automaticky vidíš kto môže a kedy — žiadne nekonečné skupinové správy.</div>
+        <div class="feature-tag purple" id="feat1-tag">už žiadne hádky</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon teal">💸</div>
+        <div class="feature-name" id="feat2-name">Deľ výdavky fér</div>
+        <div class="feature-desc" id="feat2-desc">Zaplatil niekto za všetkých? Jeden tap a Squad automaticky vypočíta kto komu čo dlží. Koniec s ručnými kalkulačkami.</div>
+        <div class="feature-tag teal" id="feat2-tag">ľahko a rýchlo</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon coral">📸</div>
+        <div class="feature-name" id="feat3-name">Spomienky skupiny</div>
+        <div class="feature-desc" id="feat3-desc">Každý člen môže pridávať fotky na konkrétnu akciu. Výsledkom je shared album s časovou osou vašich zážitkov.</div>
+        <div class="feature-tag coral" id="feat3-tag">váš spoločný album</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon amber">🔔</div>
+        <div class="feature-name" id="feat4-name">Požičané veci</div>
+        <div class="feature-desc" id="feat4-desc">Požičal si nabíjačku? Knihu? Zaznamenaj to a Squad automaticky pošle reminder — aj tebe, aj tomu druhému.</div>
+        <div class="feature-tag amber" id="feat4-tag">žiadne zabudnutie</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section id="screenshots" class="screenshots">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-eyebrow" id="demo-eyebrow">Demo</div>
+      <h2 class="section-title" id="demo-title">Pozri sa ako to vyzerá</h2>
+      <p class="section-sub" id="demo-sub" style="margin-bottom:32px">Každá funkcia navrhnutá tak, aby sa používala bez premýšľania.</p>
+      <div class="ss-tabs">
+        <button class="ss-tab active" onclick="switchDemoTab('plan',this)">📅 Plán</button>
+        <button class="ss-tab" onclick="switchDemoTab('split',this)">💸 Výdavky</button>
+        <button class="ss-tab" onclick="switchDemoTab('photos',this)">📸 Spomienky</button>
+        <button class="ss-tab" onclick="switchDemoTab('borrow',this)">🔔 Požičané</button>
+      </div>
+    </div>
+
+    <!-- PLAN -->
+    <div class="ss-panel active" id="tab-plan">
+      <div class="ss-info reveal">
+        <div class="ss-eyebrow" id="demo-plan-eye">Hlasovanie</div>
+        <div class="ss-title" id="demo-plan-title">Kde ideme? Nech rozhodne väčšina.</div>
+        <div class="ss-desc" id="demo-plan-desc">Vytvor event s viacerými možnosťami. Každý člen skupiny zahlasuje jedným klepnutím.</div>
+        <div class="ss-points">
+          <div class="ss-point"><div class="ss-point-dot"></div><div class="ss-point-text" id="demo-plan-p1"><b>Hlasovanie v reálnom čase</b> — vidíš výsledky ihneď ako kamaráti hlasujú</div></div>
+          <div class="ss-point"><div class="ss-point-dot"></div><div class="ss-point-text" id="demo-plan-p2"><b>Dostupnosť členov</b> — každý označí kedy môže</div></div>
+          <div class="ss-point"><div class="ss-point-dot"></div><div class="ss-point-text" id="demo-plan-p3"><b>Notifikácia víťaza</b> — Squad oznámi výsledok celej skupine</div></div>
+        </div>
+      </div>
+      <div class="ss-mockup reveal" style="--glow-color:rgba(124,111,247,0.12)">
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;font-weight:600" id="mock-plan-hdr">Kde ideme túto sobotu?</div>
+        <div class="mock-row" style="border-color:rgba(124,111,247,0.4);background:rgba(124,111,247,0.06)" onclick="this.style.borderColor='rgba(124,111,247,0.8)'">
+          <div style="flex:1"><div class="mock-label" id="mock-plan-l1">Bowling</div><div class="mock-sub" id="mock-plan-s1">Sobota 24.5. · 20:00</div></div>
+          <div style="display:flex;align-items:center;gap:8px"><div class="mock-bar"><div class="mock-bar-fill" style="width:80%;background:#7c6ff7"></div></div><div class="mock-cnt">4</div></div>
+          <div class="mock-check on">✓</div>
+        </div>
+        <div class="mock-row" onclick="this.style.borderColor='rgba(124,111,247,0.4)'">
+          <div style="flex:1"><div class="mock-label" id="mock-plan-l2">Kino</div><div class="mock-sub" id="mock-plan-s2">Sobota 24.5. · 19:00</div></div>
+          <div style="display:flex;align-items:center;gap:8px"><div class="mock-bar"><div class="mock-bar-fill" style="width:40%;background:#7c6ff7"></div></div><div class="mock-cnt">2</div></div>
+          <div class="mock-check off">✓</div>
+        </div>
+        <div class="mock-row" onclick="this.style.borderColor='rgba(124,111,247,0.4)'">
+          <div style="flex:1"><div class="mock-label" id="mock-plan-l3">Fitko</div><div class="mock-sub" id="mock-plan-s3">Sobota 24.5. · 20:30</div></div>
+          <div style="display:flex;align-items:center;gap:8px"><div class="mock-bar"><div class="mock-bar-fill" style="width:20%;background:#7c6ff7"></div></div><div class="mock-cnt">1</div></div>
+          <div class="mock-check off">✓</div>
+        </div>
+        <div style="margin-top:16px;background:var(--bg4);border-radius:12px;padding:14px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px" id="mock-avail-hdr">Kedy môžete?</div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;text-align:center">
+            <div style="font-size:10px;color:var(--muted)">Tomáš</div><div style="font-size:10px;color:var(--muted)">Jana</div><div style="font-size:10px;color:var(--muted)">Peter</div><div style="font-size:10px;color:var(--muted)">Simona</div><div style="font-size:10px;color:var(--muted)">Martin</div>
+            <div style="font-size:16px">✅</div><div style="font-size:16px">✅</div><div style="font-size:16px">⏳</div><div style="font-size:16px">✅</div><div style="font-size:16px">❌</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPLIT -->
+    <div class="ss-panel" id="tab-split">
+      <div class="ss-info reveal">
+        <div class="ss-eyebrow" id="demo-split-eye">Splitovanie</div>
+        <div class="ss-title" id="demo-split-title">Kto komu dlží? Squad to vie.</div>
+        <div class="ss-desc" id="demo-split-desc">Stačí zadať kto zaplatil a za koľkých. Squad vypočíta všetky dlhy.</div>
+        <div class="ss-points">
+          <div class="ss-point"><div class="ss-point-dot"></div><div class="ss-point-text" id="demo-split-p1"><b>Automatický výpočet</b> — Squad spočíta optimálne vyúčtovanie</div></div>
+          <div class="ss-point"><div class="ss-point-dot"></div><div class="ss-point-text" id="demo-split-p2"><b>Potvrdenie platby</b> — jedným tapom oznámíš že si zaplatil</div></div>
+          <div class="ss-point"><div class="ss-point-dot"></div><div class="ss-point-text" id="demo-split-p3"><b>História výdavkov</b> — všetky akcie prehľadne na jednom mieste</div></div>
+        </div>
+      </div>
+      <div class="ss-mockup reveal" style="--glow-color:rgba(46,196,160,0.1)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+          <div style="background:var(--bg4);border-radius:10px;padding:12px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Celkom</div><div style="font-family:'Familjen Grotesk',sans-serif;font-weight:800;font-size:22px">127 €</div></div>
+          <div style="background:var(--bg4);border-radius:10px;padding:12px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Ty dostaneš</div><div style="font-family:'Familjen Grotesk',sans-serif;font-weight:800;font-size:22px;color:#2ec4a0">+18,50 €</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:8px">Výdavky</div>
+        <div class="mock-row" style="margin-bottom:6px">
+          <div class="mock-icon" style="background:rgba(124,111,247,0.12);color:#7c6ff7">🍺</div>
+          <div style="flex:1"><div class="mock-label" id="mock-split-l1">Pivo</div><div class="mock-sub" id="mock-split-s1">Tomáš · 5 ľudí</div></div>
+          <div style="text-align:right"><div style="font-family:'Familjen Grotesk',sans-serif;font-size:14px;font-weight:700">62 €</div><div style="font-size:10px;color:var(--muted)">12,40/os</div></div>
+        </div>
+        <div class="mock-row" style="margin-bottom:14px">
+          <div class="mock-icon" style="background:rgba(240,104,66,0.1);color:#f06842">🍕</div>
+          <div style="flex:1"><div class="mock-label" id="mock-split-l2">Pizza</div><div class="mock-sub" id="mock-split-s2">Jana · 4 ľudia</div></div>
+          <div style="text-align:right"><div style="font-family:'Familjen Grotesk',sans-serif;font-size:14px;font-weight:700">36 €</div><div style="font-size:10px;color:var(--muted)">9,00/os</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:8px">Vyúčtovanie</div>
+        <div class="mock-debt"><div class="mock-debt-text">Jana → Tomáš <b>12,40 €</b></div><button class="mock-pay" onclick="this.textContent='✓ Hotovo';this.style.background='#0d2018'">Zaplatené</button></div>
+        <div class="mock-debt"><div class="mock-debt-text">Peter → Jana <b>9,00 €</b></div><button class="mock-pay" onclick="this.textContent='✓ Hotovo';this.style.background='#0d2018'">Zaplatené</button></div>
+      </div>
+    </div>
+
+    <!-- PHOTOS -->
+    <div class="ss-panel" id="tab-photos">
+      <div class="ss-info reveal">
+        <div class="ss-eyebrow" id="demo-photo-eye">Spomienky</div>
+        <div class="ss-title" id="demo-photo-title">Všetky fotky na jednom mieste.</div>
+        <div class="ss-desc" id="demo-photo-desc">Každá akcia má vlastný album. Každý člen skupiny môže pridávať fotky.</div>
+        <div class="ss-points">
+          <div class="ss-point"><div class="ss-point-dot"></div><div class="ss-point-text" id="demo-photo-p1"><b>Shared album</b> — fotky od všetkých členov skupiny</div></div>
+          <div class="ss-point"><div class="ss-point-dot"></div><div class="ss-point-text" id="demo-photo-p2"><b>Timeline akcií</b> — každá akcia má vlastný album zoradený podľa dátumu</div></div>
+          <div class="ss-point"><div class="ss-point-dot"></div><div class="ss-point-text" id="demo-photo-p3"><b>Likes a komentáre</b> — reaguj na fotky kamarátov priamo v apke</div></div>
+        </div>
+      </div>
+      <div class="ss-mockup reveal" style="--glow-color:rgba(240,104,66,0.08)">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:10px">Máj 2025</div>
+        <div style="background:var(--bg4);border-radius:14px;overflow:hidden;margin-bottom:10px">
+          <div class="mock-photo-grid">
+            <div class="mock-photo" style="background:#1a1a2e" onclick="this.style.filter='brightness(.7)'">🍺</div>
+            <div class="mock-photo-side">
+              <div class="mock-photo mock-photo-sm" style="background:#0d1f16" onclick="this.style.filter='brightness(.7)'">😂</div>
+              <div class="mock-photo mock-photo-sm" style="background:#2a1a10" onclick="this.style.filter='brightness(.7)'">🎉</div>
+            </div>
+          </div>
+          <div style="padding:10px 12px"><div style="font-weight:600;font-size:14px">Pivo s kamošmi</div><div style="font-size:11px;color:var(--muted);margin-top:3px">10. máj · 5 ľudí · 12 fotiek</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:10px">Apríl 2025</div>
+        <div style="background:var(--bg4);border-radius:14px;overflow:hidden">
+          <div class="mock-photo-grid">
+            <div class="mock-photo" style="background:#0a1e28" onclick="this.style.filter='brightness(.7)'">🏖️</div>
+            <div class="mock-photo-side">
+              <div class="mock-photo mock-photo-sm" style="background:#1a2010" onclick="this.style.filter='brightness(.7)'">🌅</div>
+              <div class="mock-photo mock-photo-sm" style="background:#2a1510" onclick="this.style.filter='brightness(.7)'">🍹</div>
+            </div>
+          </div>
+          <div style="padding:10px 12px"><div style="font-weight:600;font-size:14px">Víkend v Chorvátsku</div><div style="font-size:11px;color:var(--muted);margin-top:3px">5–7. apríl · 5 ľudí · 47 fotiek</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BORROW -->
+    <div class="ss-panel" id="tab-borrow">
+      <div class="ss-info reveal">
+        <div class="ss-eyebrow" id="demo-borrow-eye">Požičané veci</div>
+        <div class="ss-title" id="demo-borrow-title">Nikdy viac zabudnutá nabíjačka.</div>
+        <div class="ss-desc" id="demo-borrow-desc">Zaznamenaj čo si komu požičal. Squad automaticky posiela remindery.</div>
+        <div class="ss-points">
+          <div class="ss-point"><div class="ss-point-dot"></div><div class="ss-point-text" id="demo-borrow-p1"><b>Automatické remindery</b> — Squad pošle správu za teba</div></div>
+          <div class="ss-point"><div class="ss-point-dot"></div><div class="ss-point-text" id="demo-borrow-p2"><b>Farebné upozornenia</b> — hneď vidíš čo je dlho preč</div></div>
+          <div class="ss-point"><div class="ss-point-dot"></div><div class="ss-point-text" id="demo-borrow-p3"><b>Obojsmerné</b> — vidíš čo si ty požičal aj čo si požičal iným</div></div>
+        </div>
+      </div>
+      <div class="ss-mockup reveal" style="--glow-color:rgba(232,168,48,0.08)">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:8px">Ty si požičal od iných</div>
+        <div class="mock-borrow-row">
+          <div class="mock-borrow-icon" style="background:rgba(163,45,45,0.15);color:#e57373">🔌</div>
+          <div style="flex:1"><div class="mock-label" id="mock-borrow-l1">Nabíjačka Samsung</div><div class="mock-sub" id="mock-borrow-s1">Od Petra · 10. 5.</div></div>
+          <div class="mock-days danger">8 dní</div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin:14px 0 8px">Ty si požičal iným</div>
+        <div class="mock-borrow-row">
+          <div class="mock-borrow-icon" style="background:rgba(232,168,48,0.1);color:#e8a830">🎧</div>
+          <div style="flex:1"><div class="mock-label" id="mock-borrow-l2">Slúchadlá Sony</div><div class="mock-sub" id="mock-borrow-s2">Janovi · 15. 5.</div></div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+            <div class="mock-days warn">3 dni</div>
+            <button style="font-size:11px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:var(--muted);border-radius:100px;padding:3px 12px;cursor:pointer;font-family:'DM Sans',sans-serif" onclick="this.textContent='✓ Poslané';this.style.background='rgba(46,196,160,0.1)';this.style.color='#2ec4a0';this.style.borderColor='#2ec4a0'">🔔 Reminder</button>
+          </div>
+        </div>
+        <div class="mock-borrow-row">
+          <div class="mock-borrow-icon" style="background:rgba(232,168,48,0.1);color:#e8a830">📖</div>
+          <div style="flex:1"><div class="mock-label" id="mock-borrow-l3">Atomic Habits</div><div class="mock-sub" id="mock-borrow-s3">Martinovi · 2. 5.</div></div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+            <div class="mock-days danger">16 dní</div>
+            <button style="font-size:11px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:var(--muted);border-radius:100px;padding:3px 12px;cursor:pointer;font-family:'DM Sans',sans-serif" onclick="this.textContent='✓ Poslané';this.style.background='rgba(46,196,160,0.1)';this.style.color='#2ec4a0';this.style.borderColor='#2ec4a0'">🔔 Reminder</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="container">
+    <div class="reveal" style="text-align:center;max-width:600px;margin:0 auto">
+      <div class="section-eyebrow" id="how-eyebrow">Ako to funguje</div>
+      <h2 class="section-title" id="how-title">Tri kroky a vaša parta je v Squad</h2>
+    </div>
+    <div class="steps reveal">
+      <div class="step"><div class="step-num">01</div><div class="step-title" id="step1-title">Vytvor skupinu</div><div class="step-desc" id="step1-desc">Pomenuj svoju partu, pridaj kamarátov cez link. Za 30 sekúnd ste všetci vnútri.</div></div>
+      <div class="step"><div class="step-num">02</div><div class="step-title" id="step2-title">Používajte spolu</div><div class="step-desc" id="step2-desc">Plánujte, splitujte výdavky, pridávajte fotky — každý zo svojho telefónu.</div></div>
+      <div class="step"><div class="step-num">03</div><div class="step-title" id="step3-title">Žite naplno</div><div class="step-desc" id="step3-desc">Menej organizačného chaosu, viac zábavy. Squad sa postará o administratívu za vás.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="container">
+    <div class="reveal" style="text-align:center;max-width:600px;margin:0 auto 56px">
+      <div class="section-eyebrow" id="price-eyebrow">Ceny</div>
+      <h2 class="section-title" id="price-title">Začni zadarmo. Plať len keď rastieš.</h2>
+      <p class="section-sub" id="price-sub" style="margin:0 auto">Základné funkcie sú a zostanú zadarmo navždy.</p>
+    </div>
+    <div class="pricing-grid reveal">
+      <!-- FREE -->
+      <div class="price-card">
+        <div class="price-plan" id="plan-free-name">Free</div>
+        <div class="price-amount"><span class="price-num">0</span><span class="price-cur">€</span><span class="price-per" id="plan-free-per">/mesiac</span></div>
+        <div class="price-desc" id="plan-free-desc">Perfektné pre vyskúšanie — bez kreditnej karty.</div>
+        <ul class="price-features">
+          <li class="feat-ok" id="pf-f1">1 skupina</li>
+          <li class="feat-ok" id="pf-f2">Max 5 členov</li>
+          <li class="feat-ok" id="pf-f3">Hlasovanie a plán akcií</li>
+          <li class="feat-ok" id="pf-f4">Splitovanie výdavkov</li>
+          <li class="feat-no" id="pf-f5">Foto timeline</li>
+          <li class="feat-no" id="pf-f6">Neobmedzené skupiny</li>
+          <li class="feat-no" id="pf-f7">Export výdavkov (PDF)</li>
+        </ul>
+        <!-- ✅ OPRAVENÉ: href="login.html" -->
+        <a href="login.html" class="price-btn price-btn-ghost" id="plan-free-btn">Začať zadarmo</a>
+      </div>
+      <!-- PRO -->
+      <div class="price-card price-card-pro">
+        <div class="price-badge" id="plan-pro-badge">Najpopulárnejší</div>
+        <div class="price-plan" id="plan-pro-name">Squad Pro</div>
+        <div class="price-amount"><span class="price-num">4</span><span class="price-cur">€</span><span class="price-per" id="plan-pro-per">/mesiac</span></div>
+        <div class="price-desc" id="plan-pro-desc">Pre partu ktorá to myslí vážne.</div>
+        <ul class="price-features">
+          <li class="feat-ok" id="pf-p1">Neobmedzené skupiny</li>
+          <li class="feat-ok" id="pf-p2">Neobmedzení členovia</li>
+          <li class="feat-ok" id="pf-p3">Hlasovanie a plán akcií</li>
+          <li class="feat-ok" id="pf-p4">Splitovanie výdavkov</li>
+          <li class="feat-ok" id="pf-p5">Foto timeline</li>
+          <li class="feat-ok" id="pf-p6">Požičané veci + remindery</li>
+          <li class="feat-ok" id="pf-p7">Export výdavkov (PDF)</li>
+        </ul>
+        <!-- ✅ OPRAVENÉ: href="login.html" -->
+        <a href="login.html" class="price-btn price-btn-primary" id="plan-pro-btn">Vyskúšať Pro</a>
+      </div>
+      <!-- TEAM -->
+      <div class="price-card">
+        <div class="price-plan" id="plan-team-name">Squad Team</div>
+        <div class="price-amount"><span class="price-num">9</span><span class="price-cur">€</span><span class="price-per" id="plan-team-per">/mesiac</span></div>
+        <div class="price-desc" id="plan-team-desc">Pre veľké skupiny a organizátorov eventov.</div>
+        <ul class="price-features">
+          <li class="feat-ok" id="pf-t1">Všetko v Pro</li>
+          <li class="feat-ok" id="pf-t2">Až 50 členov v skupine</li>
+          <li class="feat-ok" id="pf-t3">Štatistiky výdavkov</li>
+          <li class="feat-ok" id="pf-t4">Vlastná URL skupiny</li>
+          <li class="feat-ok" id="pf-t5">QR kód pozývanie</li>
+          <li class="feat-ok" id="pf-t6">Prioritná podpora</li>
+          <li class="feat-ok" id="pf-t7">Skorý prístup k novinkám</li>
+        </ul>
+        <!-- ✅ OPRAVENÉ: href="login.html" -->
+        <a href="login.html" class="price-btn price-btn-ghost" id="plan-team-btn">Vyskúšať Team</a>
+      </div>
+    </div>
+    <div class="price-note reveal" id="price-note">Všetky plány obsahujú 14-dňovú bezplatnú skúšobnú verziu. Bez viazanosti.</div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="waitlist" class="waitlist">
+  <div class="container">
+    <div class="waitlist-inner reveal">
+      <div class="section-eyebrow" id="cta-eyebrow" style="text-align:center">Začni teraz</div>
+      <h2 class="section-title" id="cta-title" style="text-align:center">Pripoj svoju partu do Squad</h2>
+      <p class="section-sub" id="cta-sub" style="text-align:center;margin:0 auto 36px">Vytvor účet zadarmo a začni plánovať, splitovať výdavky a zbierať spomienky.</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <!-- ✅ OPRAVENÉ: href="login.html" -->
+        <a id="cta-btn1" href="login.html" class="btn-primary" onclick="window.location.href='login.html';return false;">Vytvoriť účet zadarmo →</a>
+        <a id="cta-btn2" href="login.html" class="btn-secondary" onclick="window.location.href='login.html';return false;">Prihlásiť sa</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">squad<span>.</span></div>
+  <div class="footer-copy">© 2025 Squad.</div>
+  <div class="footer-links">
+    <a href="privacy.html" id="footer-lnk1">Ochrana dát</a>
+    <a href="terms.html" id="footer-lnk2">Podmienky</a>
+    <a href="mailto:samuel.gyurak@gmail.com" id="footer-lnk3">Kontakt</a>
+  </div>
+</footer>
+
+<script>
+// ── SUPABASE AUTO-REDIRECT (ak je user prihlásený, pošli ho do app)
+const SUPA_URL = 'https://ntxtmyglpgtrqyhhfpmr.supabase.co'
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50eHRteWdscGd0cnF5aGhmcG1yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMTkwMzAsImV4cCI6MjA5NDY5NTAzMH0.F-EuiMd_kQ5BeQBUlRc43z2defPkg1mrathzhA3Q7p8'
+const { createClient } = supabase
+const sb = createClient(SUPA_URL, SUPA_KEY)
+sb.auth.getSession().then(({ data: { session } }) => {
+  if (session) window.location.href = 'app.html'
+})
+
+// ── DEMO TABS
+function switchDemoTab(id, btn) {
+  document.querySelectorAll('.ss-tab').forEach(t => t.classList.remove('active'))
+  document.querySelectorAll('.ss-panel').forEach(p => p.classList.remove('active'))
+  btn.classList.add('active')
+  document.getElementById('tab-' + id).classList.add('active')
+}
+
+// ── SCROLL REVEAL
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible') })
+}, { threshold: 0.05 })
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el))
+
+// ── NAV SCROLL
+const navEl = document.querySelector('nav')
+window.addEventListener('scroll', () => {
+  navEl.style.background = window.scrollY > 60 ? 'rgba(8,8,8,0.96)' : ''
+  navEl.style.borderBottom = window.scrollY > 60 ? '1px solid rgba(255,255,255,0.07)' : ''
+})
+
+// ── LANG
+function toggleLangDD() { document.getElementById('langDD').classList.toggle('open') }
+function closeLangDD() { document.getElementById('langDD').classList.remove('open') }
+document.addEventListener('click', e => { if (!e.target.closest('.nav-lang')) closeLangDD() })
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLangDD() })
+
+const LANGS = {
+  sk:{
+    flag:'🇸🇰',short:'SK',
+    login:'Prihlásiť sa',reg:'Registrácia',
+    nav:['Funkcie','Demo','Ceny','Ako to funguje'],
+    heroTitle:'Tvoja parta.<br>Jeden <em>Squad</em>.',
+    heroSub:'Plánuj akcie, deľ výdavky, zbieraj spomienky a nezabúdaj na požičané veci — všetko na jednom mieste.',
+    heroPrimary:'Vytvoriť účet zadarmo ✦', heroSecondary:'Pozrieť demo →',
+    stat1:'menej hádok kde ideme', stat2:'zabudnutých dlhov', stat3:'spomienok uložených',
+    featEyebrow:'Funkcie', featTitle:'Všetko čo tvoja parta potrebuje',
+    featSub:'Žiadne prepínanie medzi Doodle, Splitwise a WhatsApp. Squad je jedno miesto pre všetko.',
+    feat1n:'Plánuj bez hádok', feat1d:'Navrhni termíny a miesta, každý zahlasuje. Automaticky vidíš kto môže a kedy — žiadne nekonečné skupinové správy.', feat1t:'už žiadne hádky',
+    feat2n:'Deľ výdavky fér', feat2d:'Zaplatil niekto za všetkých? Jeden tap a Squad automaticky vypočíta kto komu čo dlží. Koniec s ručnými kalkulačkami.', feat2t:'ľahko a rýchlo',
+    feat3n:'Spomienky skupiny', feat3d:'Každý člen môže pridávať fotky na konkrétnu akciu. Výsledkom je shared album s časovou osou vašich zážitkov.', feat3t:'váš spoločný album',
+    feat4n:'Požičané veci', feat4d:'Požičal si nabíjačku? Knihu? Zaznamenaj to a Squad automaticky pošle reminder — aj tebe, aj tomu druhému.', feat4t:'žiadne zabudnutie',
+    demoEyebrow:'Demo', demoTitle:'Pozri sa ako to vyzerá',
+    demoTabs:['📅 Plán','💸 Výdavky','📸 Spomienky','🔔 Požičané'],
+    howEyebrow:'Ako to funguje', howTitle:'Tri kroky a vaša parta je v Squad',
+    step1t:'Vytvor skupinu', step1d:'Pomenuj svoju partu, pridaj kamarátov cez link. Za 30 sekúnd ste všetci vnútri.',
+    step2t:'Používajte spolu', step2d:'Plánujte, splitujte výdavky, pridávajte fotky — každý zo svojho telefónu.',
+    step3t:'Žite naplno', step3d:'Menej organizačného chaosu, viac zábavy. Squad sa postará o administratívu za vás.',
+    priceEyebrow:'Ceny', priceTitle:'Začni zadarmo. Plať len keď rastieš.',
+    priceSub:'Základné funkcie sú a zostanú zadarmo navždy.', priceNote:'Všetky plány obsahujú 14-dňovú bezplatnú skúšobnú verziu. Bez viazanosti.',
+    per:'/mesiac', badge:'Najpopulárnejší',
+    freeName:'Free', freeDesc:'Perfektné pre vyskúšanie — bez kreditnej karty.', freeBtn:'Začať zadarmo',
+    proName:'Squad Pro', proDesc:'Pre partu ktorá to myslí vážne.', proBtn:'Vyskúšať Pro',
+    teamName:'Squad Team', teamDesc:'Pre veľké skupiny a organizátorov eventov.', teamBtn:'Vyskúšať Team',
+    ff:['1 skupina','Max 5 členov','Hlasovanie a plán akcií','Splitovanie výdavkov','Foto timeline','Neobmedzené skupiny','Export výdavkov (PDF)'],
+    pf:['Neobmedzené skupiny','Neobmedzení členovia','Hlasovanie a plán akcií','Splitovanie výdavkov','Foto timeline','Požičané veci + remindery','Export výdavkov (PDF)'],
+    tf:['Všetko v Pro','Až 50 členov v skupine','Štatistiky výdavkov','Vlastná URL skupiny','QR kód pozývanie','Prioritná podpora','Skorý prístup k novinkám'],
+    ctaEyebrow:'Začni teraz', ctaTitle:'Pripoj svoju partu do Squad',
+    ctaSub:'Vytvor účet zadarmo a začni plánovať, splitovať výdavky a zbierať spomienky.',
+    ctaPrimary:'Vytvoriť účet zadarmo →', ctaSecondary:'Prihlásiť sa',
+    footer:['Ochrana dát','Podmienky','Kontakt'],
+    demoSub:'Každá funkcia navrhnutá tak, aby sa používala bez premýšľania.',
+    mock:{group:'Meet with friends',members:'5 členov ▾',where:'Kde ideme?',expenses:'Výdavky dnes',exp1:'Pivo',exp2:'Pizza',nav:['Plán','Split','Foto','Požič.']},
+    demo:{
+      plan:{eye:'Hlasovanie',title:'Kde ideme? Nech rozhodne väčšina.',desc:'Vytvor event s viacerými možnosťami. Každý člen skupiny zahlasuje jedným klepnutím.',p1:'<b>Hlasovanie v reálnom čase</b> — vidíš výsledky ihneď ako kamaráti hlasujú',p2:'<b>Dostupnosť členov</b> — každý označí kedy môže',p3:'<b>Notifikácia víťaza</b> — Squad oznámi výsledok celej skupine',mockHdr:'Kde ideme túto sobotu?',mockAvail:'Kedy môžete?'},
+      split:{eye:'Splitovanie',title:'Kto komu dlží? Squad to vie.',desc:'Stačí zadať kto zaplatil a za koľkých. Squad vypočíta všetky dlhy.'},
+      photo:{eye:'Spomienky',title:'Všetky fotky na jednom mieste.',desc:'Každá akcia má vlastný album. Každý člen skupiny môže pridávať fotky.'},
+      borrow:{eye:'Požičané veci',title:'Nikdy viac zabudnutá nabíjačka.',desc:'Zaznamenaj čo si komu požičal. Squad automaticky posiela remindery.'},
+    },
+  },
+  cs:{
+    flag:'🇨🇿',short:'CS',
+    login:'Přihlásit se',reg:'Registrace',
+    nav:['Funkce','Demo','Ceny','Jak to funguje'],
+    heroTitle:'Tvoje parta.<br>Jeden <em>Squad</em>.',
+    heroSub:'Plánuj akce, dělte výdaje, sbírejte vzpomínky a nezapomínejte na půjčené věci.',
+    heroPrimary:'Vytvořit účet zdarma ✦', heroSecondary:'Zobrazit demo →',
+    stat1:'méně hádek kam jdeme', stat2:'zapomenutých dluhů', stat3:'vzpomínek uložených',
+    featEyebrow:'Funkce', featTitle:'Vše co tvoje parta potřebuje',
+    featSub:'Žádné přepínání mezi Doodle, Splitwise a WhatsApp.',
+    feat1n:'Plánuj bez hádek', feat1d:'Navrhni termíny a místa, každý zahlasuje. Okamžitě vidíš kdo může a kdy.', feat1t:'žádné hádky',
+    feat2n:'Dělte výdaje férově', feat2d:'Zaplatil někdo za všechny? Squad vypočítá kdo komu co dluží.', feat2t:'snadno a rychle',
+    feat3n:'Vzpomínky skupiny', feat3d:'Každý člen může přidávat fotky. Výsledkem je shared album s časovou osou.', feat3t:'váš společný album',
+    feat4n:'Půjčené věci', feat4d:'Půjčil sis nabíječku? Knihu? Zaznamenej to a Squad pošle reminder.', feat4t:'žádné zapomínání',
+    demoEyebrow:'Demo', demoTitle:'Podívej se jak to vypadá',
+    demoTabs:['📅 Plán','💸 Výdaje','📸 Vzpomínky','🔔 Půjčené'],
+    howEyebrow:'Jak to funguje', howTitle:'Tři kroky a vaše parta je ve Squad',
+    step1t:'Vytvoř skupinu', step1d:'Pojmenuj svoji partu, přidej kamarády přes link. Za 30 sekund jste všichni uvnitř.',
+    step2t:'Používejte spolu', step2d:'Plánujte, splitujte výdaje, přidávejte fotky — každý ze svého telefonu.',
+    step3t:'Žijte naplno', step3d:'Méně organizačního chaosu, více zábavy.',
+    priceEyebrow:'Ceny', priceTitle:'Začni zdarma. Plať jen když rosteš.',
+    priceSub:'Základní funkce jsou a zůstanou zdarma navždy.', priceNote:'Všechny plány obsahují 14denní bezplatnou zkušební verzi. Bez závazků.',
+    per:'/měsíc', badge:'Nejpopulárnější',
+    freeName:'Free', freeDesc:'Perfektní pro vyzkoušení — bez kreditní karty.', freeBtn:'Začít zdarma',
+    proName:'Squad Pro', proDesc:'Pro partu která to myslí vážně.', proBtn:'Vyzkoušet Pro',
+    teamName:'Squad Team', teamDesc:'Pro velké skupiny a organizátory eventů.', teamBtn:'Vyzkoušet Team',
+    ff:['1 skupina','Max 5 členů','Hlasování a plán akcí','Splitování výdajů','Foto timeline','Neomezené skupiny','Export výdajů (PDF)'],
+    pf:['Neomezené skupiny','Neomezení členové','Hlasování a plán akcí','Splitování výdajů','Foto timeline','Půjčené věci + remindery','Export výdajů (PDF)'],
+    tf:['Vše v Pro','Až 50 členů','Statistiky výdajů','Vlastní URL skupiny','QR kód pozvání','Prioritní podpora','Brzký přístup k novinkám'],
+    ctaEyebrow:'Začni teď', ctaTitle:'Připoj svoji partu do Squad',
+    ctaSub:'Vytvoř účet zdarma a začni plánovat, splitovat výdaje a sbírat vzpomínky.',
+    ctaPrimary:'Vytvořit účet zdarma →', ctaSecondary:'Přihlásit se',
+    footer:['Ochrana dat','Podmínky','Kontakt'],
+    demoSub:'Každá funkce navržená tak, aby se používala bez přemýšlení.',
+    mock:{group:'Meet with friends',members:'5 členů ▾',where:'Kam jdeme?',expenses:'Výdaje dnes',exp1:'Pivo',exp2:'Pizza',nav:['Plán','Split','Foto','Půjč.']},
+    demo:{
+      plan:{eye:'Hlasování',title:'Kam jdeme? Ať rozhodne většina.',desc:'Vytvoř event s více možnostmi. Každý člen skupiny zahlasuje jedním klepnutím.',p1:'<b>Hlasování v reálném čase</b> — vidíš výsledky hned jak kamarádi hlasují',p2:'<b>Dostupnost členů</b> — každý označí kdy může',p3:'<b>Notifikace vítěze</b> — Squad oznámí výsledek celé skupině',mockHdr:'Kam jdeme tuto sobotu?',mockAvail:'Kdy můžete?'},
+      split:{eye:'Splitování',title:'Kdo komu dluží? Squad to ví.',desc:'Stačí zadat kdo zaplatil a za kolik. Squad vypočítá všechny dluhy.'},
+      photo:{eye:'Vzpomínky',title:'Všechny fotky na jednom místě.',desc:'Každá akce má vlastní album. Každý člen skupiny může přidávat fotky.'},
+      borrow:{eye:'Půjčené věci',title:'Nikdy více zapomenutá nabíječka.',desc:'Zaznamenej co jsi komu půjčil. Squad automaticky posílá remindery.'},
+    },
+  },
+  en:{
+    flag:'🇬🇧',short:'EN',
+    login:'Log in',reg:'Sign up',
+    nav:['Features','Demo','Pricing','How it works'],
+    heroTitle:'Your crew.<br>One <em>Squad</em>.',
+    heroSub:'Plan hangouts, split expenses, collect memories and never forget borrowed stuff — all in one place.',
+    heroPrimary:'Create free account ✦', heroSecondary:'See demo →',
+    stat1:'fewer arguments on where to go', stat2:'forgotten debts', stat3:'memories saved',
+    featEyebrow:'Features', featTitle:'Everything your crew needs',
+    featSub:'No more switching between Doodle, Splitwise and WhatsApp.',
+    feat1n:'Plan without arguments', feat1d:'Suggest dates and places, everyone votes. See who can make it instantly.', feat1t:'no more arguments',
+    feat2n:'Split expenses fairly', feat2d:'Someone paid for everyone? One tap and Squad calculates who owes what.', feat2t:'easy and fast',
+    feat3n:'Group memories', feat3d:'Every member can add photos. The result is a shared album with a timeline of your experiences.', feat3t:'your shared album',
+    feat4n:'Borrowed stuff', feat4d:'Borrowed a charger? A book? Log it and Squad automatically sends reminders.', feat4t:'never forgotten',
+    demoEyebrow:'Demo', demoTitle:'See how it works',
+    demoTabs:['📅 Plan','💸 Expenses','📸 Memories','🔔 Borrowed'],
+    howEyebrow:'How it works', howTitle:'Three steps and your crew is in Squad',
+    step1t:'Create a group', step1d:'Name your crew, add friends via link. Everyone is in within 30 seconds.',
+    step2t:'Use it together', step2d:'Plan, split expenses, add photos — everyone from their own phone.',
+    step3t:'Live to the fullest', step3d:'Less organizational chaos, more fun. Squad handles the admin of friendship.',
+    priceEyebrow:'Pricing', priceTitle:'Start free. Pay only when you grow.',
+    priceSub:'Basic features are and will always be free.', priceNote:'All plans include a 14-day free trial. No commitment, cancel anytime.',
+    per:'/month', badge:'Most popular',
+    freeName:'Free', freeDesc:'Perfect to try out — no credit card required.', freeBtn:'Get started free',
+    proName:'Squad Pro', proDesc:'For the crew that means business.', proBtn:'Try Pro',
+    teamName:'Squad Team', teamDesc:'For large groups and event organizers.', teamBtn:'Try Team',
+    ff:['1 group','Up to 5 members','Voting & event planning','Expense splitting','Photo timeline','Unlimited groups','Expense export (PDF)'],
+    pf:['Unlimited groups','Unlimited members','Voting & event planning','Expense splitting','Photo timeline','Borrowed items & reminders','Expense export (PDF)'],
+    tf:['Everything in Pro','Up to 50 members','Expense statistics','Custom group URL','QR code invites','Priority support','Early access to new features'],
+    ctaEyebrow:'Get started', ctaTitle:'Bring your crew to Squad',
+    ctaSub:'Create a free account and start planning, splitting expenses and collecting memories.',
+    ctaPrimary:'Create free account →', ctaSecondary:'Log in',
+    footer:['Privacy','Terms','Contact'],
+    demoSub:'Every feature designed to be used without thinking.',
+    mock:{group:'Meet with friends',members:'5 members ▾',where:'Where are we going?',expenses:'Expenses today',exp1:'Beer',exp2:'Pizza',nav:['Plan','Split','Photos','Lent']},
+    demo:{
+      plan:{eye:'Voting',title:'Where to go? Let the majority decide.',desc:'Create an event with multiple options. Every group member votes with one tap.',p1:'<b>Real-time voting</b> — see results as your friends vote',p2:'<b>Member availability</b> — everyone marks when they can',p3:'<b>Winner notification</b> — Squad announces the result',mockHdr:'Where are we going this Saturday?',mockAvail:'When can you make it?'},
+      split:{eye:'Splitting',title:'Who owes what? Squad knows.',desc:'Enter who paid and for how many. Squad calculates all debts.'},
+      photo:{eye:'Memories',title:'All photos in one place.',desc:'Each event has its own album. Every member can add photos.'},
+      borrow:{eye:'Borrowed stuff',title:'Never forget a charger again.',desc:'Log what you lent to whom. Squad sends reminders automatically.'},
+    },
+  },
+  de:{
+    flag:'🇩🇪',short:'DE',
+    login:'Anmelden',reg:'Registrieren',
+    nav:['Funktionen','Demo','Preise','So funktionierts'],
+    heroTitle:'Deine Crew.<br>Ein <em>Squad</em>.',
+    heroSub:'Plant Treffen, teilt Ausgaben, sammelt Erinnerungen und vergesst keine geliehenen Sachen mehr.',
+    heroPrimary:'Kostenloses Konto erstellen ✦', heroSecondary:'Demo ansehen →',
+    stat1:'weniger Streit wohin wir gehen', stat2:'vergessene Schulden', stat3:'gespeicherte Erinnerungen',
+    featEyebrow:'Funktionen', featTitle:'Alles was deine Crew braucht',
+    featSub:'Kein Wechseln mehr zwischen Doodle, Splitwise und WhatsApp.',
+    feat1n:'Ohne Streit planen', feat1d:'Schlage Termine vor, alle stimmen ab. Sieh sofort wer kann.', feat1t:'kein Streit mehr',
+    feat2n:'Ausgaben fair teilen', feat2d:'Jemand hat für alle bezahlt? Squad berechnet wer was schuldet.', feat2t:'einfach und schnell',
+    feat3n:'Gruppen-Erinnerungen', feat3d:'Jedes Mitglied kann Fotos hinzufügen. Das Ergebnis ist ein geteiltes Album.', feat3t:'euer gemeinsames Album',
+    feat4n:'Geliehene Sachen', feat4d:'Geliehenes Ladekabel? Buch? Merke es dir und Squad sendet Erinnerungen.', feat4t:'nichts vergessen',
+    demoEyebrow:'Demo', demoTitle:'Sieh wie es aussieht',
+    demoTabs:['📅 Plan','💸 Ausgaben','📸 Erinnerungen','🔔 Geliehen'],
+    howEyebrow:'So funktionierts', howTitle:'Drei Schritte und deine Crew ist in Squad',
+    step1t:'Erstelle eine Gruppe', step1d:'Benenne deine Crew, füge Freunde per Link hinzu.',
+    step2t:'Gemeinsam nutzen', step2d:'Planen, Ausgaben teilen, Fotos hinzufügen — jeder vom eigenen Handy.',
+    step3t:'Lebe in vollen Zügen', step3d:'Weniger Organisationschaos, mehr Spaß.',
+    priceEyebrow:'Preise', priceTitle:'Kostenlos starten. Zahle nur wenn du wächst.',
+    priceSub:'Grundfunktionen sind und bleiben kostenlos.', priceNote:'Alle Pläne beinhalten eine 14-tägige kostenlose Testphase. Keine Bindung.',
+    per:'/Monat', badge:'Beliebtester',
+    freeName:'Free', freeDesc:'Perfekt zum Ausprobieren — keine Kreditkarte nötig.', freeBtn:'Kostenlos starten',
+    proName:'Squad Pro', proDesc:'Für die Crew die es ernst meint.', proBtn:'Pro testen',
+    teamName:'Squad Team', teamDesc:'Für große Gruppen und Event-Organisatoren.', teamBtn:'Team testen',
+    ff:['1 Gruppe','Max 5 Mitglieder','Abstimmung & Eventplanung','Ausgaben teilen','Foto-Timeline','Unbegrenzte Gruppen','Ausgaben-Export (PDF)'],
+    pf:['Unbegrenzte Gruppen','Unbegrenzte Mitglieder','Abstimmung & Eventplanung','Ausgaben teilen','Foto-Timeline','Geliehene Sachen + Erinnerungen','Ausgaben-Export (PDF)'],
+    tf:['Alles in Pro','Bis zu 50 Mitglieder','Ausgabenstatistiken','Eigene Gruppen-URL','QR-Code-Einladungen','Prioritätssupport','Frühzeitiger Zugang'],
+    ctaEyebrow:'Loslegen', ctaTitle:'Bring deine Crew zu Squad',
+    ctaSub:'Erstelle ein kostenloses Konto und fange an zu planen.',
+    ctaPrimary:'Kostenloses Konto erstellen →', ctaSecondary:'Anmelden',
+    footer:['Datenschutz','Bedingungen','Kontakt'],
+    demoSub:'Jede Funktion so gestaltet, dass sie ohne Nachdenken verwendet werden kann.',
+    mock:{group:'Meet with friends',members:'5 Mitglieder ▾',where:'Wohin gehen wir?',expenses:'Ausgaben heute',exp1:'Bier',exp2:'Pizza',nav:['Plan','Split','Fotos','Leihen']},
+    demo:{
+      plan:{eye:'Abstimmung',title:'Wohin? Die Mehrheit entscheidet.',desc:'Erstelle ein Event mit mehreren Optionen. Jedes Mitglied stimmt mit einem Tap ab.',p1:'<b>Abstimmung in Echtzeit</b> — sieh Ergebnisse sofort',p2:'<b>Verfügbarkeit der Mitglieder</b> — jeder markiert wann er kann',p3:'<b>Gewinner-Benachrichtigung</b> — Squad kündigt das Ergebnis an',mockHdr:'Wohin gehen wir diesen Samstag?',mockAvail:'Wann könnt ihr?'},
+      split:{eye:'Aufteilung',title:'Wer schuldet was? Squad weiß es.',desc:'Gib ein wer bezahlt hat und für wie viele. Squad berechnet alle Schulden.'},
+      photo:{eye:'Erinnerungen',title:'Alle Fotos an einem Ort.',desc:'Jedes Event hat ein eigenes Album. Jedes Mitglied kann Fotos hinzufügen.'},
+      borrow:{eye:'Geliehene Sachen',title:'Nie mehr vergessenes Ladekabel.',desc:'Merke was du wem geliehen hast. Squad sendet automatisch Erinnerungen.'},
+    },
+  },
+  pl:{
+    flag:'🇵🇱',short:'PL',
+    login:'Zaloguj się',reg:'Rejestracja',
+    nav:['Funkcje','Demo','Ceny','Jak to działa'],
+    heroTitle:'Twoja ekipa.<br>Jeden <em>Squad</em>.',
+    heroSub:'Planuj wyjścia, dziel wydatki, zbieraj wspomnienia i nie zapominaj o pożyczonych rzeczach.',
+    heroPrimary:'Utwórz konto za darmo ✦', heroSecondary:'Zobacz demo →',
+    stat1:'mniej kłótni dokąd idziemy', stat2:'zapomnianych długów', stat3:'wspomnień zapisanych',
+    featEyebrow:'Funkcje', featTitle:'Wszystko czego potrzebuje twoja ekipa',
+    featSub:'Koniec z przełączaniem między Doodle, Splitwise i WhatsApp.',
+    feat1n:'Planuj bez kłótni', feat1d:'Zaproponuj terminy, każdy głosuje. Widz od razu kto może.', feat1t:'żadnych kłótni',
+    feat2n:'Dziel wydatki uczciwie', feat2d:'Ktoś zapłacił za wszystkich? Squad wyliczy kto co jest winien.', feat2t:'łatwo i szybko',
+    feat3n:'Wspomnienia grupy', feat3d:'Każdy członek może dodawać zdjęcia. Wynikiem jest wspólny album.', feat3t:'wasz wspólny album',
+    feat4n:'Pożyczone rzeczy', feat4d:'Pożyczyłeś ładowarkę? Książkę? Zapisz to a Squad wyśle przypomnienie.', feat4t:'nic nie zapomniane',
+    demoEyebrow:'Demo', demoTitle:'Zobacz jak to wygląda',
+    demoTabs:['📅 Plan','💸 Wydatki','📸 Wspomnienia','🔔 Pożyczone'],
+    howEyebrow:'Jak to działa', howTitle:'Trzy kroki i twoja ekipa jest w Squad',
+    step1t:'Utwórz grupę', step1d:'Nazwij swoją ekipę, dodaj znajomych przez link.',
+    step2t:'Używajcie razem', step2d:'Planujcie, dzielcie wydatki, dodawajcie zdjęcia — każdy ze swojego telefonu.',
+    step3t:'Żyjcie pełnią życia', step3d:'Mniej organizacyjnego chaosu, więcej zabawy.',
+    priceEyebrow:'Ceny', priceTitle:'Zacznij za darmo. Płać tylko gdy rośniesz.',
+    priceSub:'Podstawowe funkcje są i pozostaną bezpłatne na zawsze.', priceNote:'Wszystkie plany zawierają 14-dniowy bezpłatny okres próbny. Bez zobowiązań.',
+    per:'/miesiąc', badge:'Najpopularniejszy',
+    freeName:'Free', freeDesc:'Idealne do wypróbowania — bez karty kredytowej.', freeBtn:'Zacznij za darmo',
+    proName:'Squad Pro', proDesc:'Dla ekipy która traktuje to poważnie.', proBtn:'Wypróbuj Pro',
+    teamName:'Squad Team', teamDesc:'Dla dużych grup i organizatorów eventów.', teamBtn:'Wypróbuj Team',
+    ff:['1 grupa','Maks. 5 członków','Głosowanie i planowanie','Podział wydatków','Foto timeline','Nieograniczone grupy','Eksport wydatków (PDF)'],
+    pf:['Nieograniczone grupy','Nieograniczeni członkowie','Głosowanie i planowanie','Podział wydatków','Foto timeline','Pożyczone rzeczy + przypomnienia','Eksport wydatków (PDF)'],
+    tf:['Wszystko z Pro','Do 50 członków','Statystyki wydatków','Własny URL grupy','Zaproszenia QR','Priorytetowe wsparcie','Wczesny dostęp do nowości'],
+    ctaEyebrow:'Zacznij teraz', ctaTitle:'Dołącz swoją ekipę do Squad',
+    ctaSub:'Utwórz bezpłatne konto i zacznij planować, dzielić wydatki i zbierać wspomnienia.',
+    ctaPrimary:'Utwórz konto za darmo →', ctaSecondary:'Zaloguj się',
+    footer:['Prywatność','Warunki','Kontakt'],
+    demoSub:'Każda funkcja zaprojektowana tak, aby używać jej bez zastanowienia.',
+    mock:{group:'Meet with friends',members:'5 członków ▾',where:'Dokąd idziemy?',expenses:'Wydatki dziś',exp1:'Piwo',exp2:'Pizza',nav:['Plan','Split','Foto','Pożycz.']},
+    demo:{
+      plan:{eye:'Głosowanie',title:'Dokąd idziemy? Niech zdecyduje większość.',desc:'Stwórz event z wieloma opcjami. Każdy członek głosuje jednym dotknięciem.',p1:'<b>Głosowanie w czasie rzeczywistym</b> — widzisz wyniki jak znajomi głosują',p2:'<b>Dostępność członków</b> — każdy zaznacza kiedy może',p3:'<b>Powiadomienie o zwycięzcy</b> — Squad ogłasza wynik',mockHdr:'Dokąd idziemy w tę sobotę?',mockAvail:'Kiedy możecie?'},
+      split:{eye:'Podział',title:'Kto komu jest winien? Squad wie.',desc:'Wpisz kto zapłacił i za ilu. Squad wyliczy wszystkie długi.'},
+      photo:{eye:'Wspomnienia',title:'Wszystkie zdjęcia w jednym miejscu.',desc:'Każde wydarzenie ma własny album. Każdy członek może dodawać zdjęcia.'},
+      borrow:{eye:'Pożyczone rzeczy',title:'Nigdy więcej zapomnianej ładowarki.',desc:'Zapisz co komu pożyczyłeś. Squad automatycznie wysyła przypomnienia.'},
+    },
+  },
+  hu:{
+    flag:'🇭🇺',short:'HU',
+    login:'Bejelentkezés',reg:'Regisztráció',
+    nav:['Funkciók','Demo','Árak','Hogyan működik'],
+    heroTitle:'A csapatod.<br>Egy <em>Squad</em>.',
+    heroSub:'Tervezz programokat, oszd el a kiadásokat, gyűjts emlékeket és ne felejts el semmit.',
+    heroPrimary:'Ingyenes fiók létrehozása ✦', heroSecondary:'Demo megtekintése →',
+    stat1:'kevesebb vita arról hova menjünk', stat2:'elfelejtett tartozás', stat3:'mentett emlék',
+    featEyebrow:'Funkciók', featTitle:'Minden amire csapatodnak szüksége van',
+    featSub:'Nem kell többé váltogatni a Doodle, Splitwise és WhatsApp között.',
+    feat1n:'Tervezz viták nélkül', feat1d:'Javasolj időpontokat, mindenki szavaz. Azonnal látod ki ér rá.', feat1t:'nincs több vita',
+    feat2n:'Osszátok el a kiadásokat', feat2d:'Valaki fizetett mindenért? Squad kiszámolja ki mit tartozik.', feat2t:'könnyen és gyorsan',
+    feat3n:'Csoportos emlékek', feat3d:'Minden tag adhat hozzá fotókat. Az eredmény egy közös album.', feat3t:'közös albumotok',
+    feat4n:'Kölcsönzött dolgok', feat4d:'Kölcsönadtad a töltőt? Könyvet? Rögzítsd és Squad küld emlékeztetőt.', feat4t:'semmi el nem felejthető',
+    demoEyebrow:'Demo', demoTitle:'Nézd meg hogyan néz ki',
+    demoTabs:['📅 Terv','💸 Kiadások','📸 Emlékek','🔔 Kölcsön'],
+    howEyebrow:'Hogyan működik', howTitle:'Három lépés és csapatod a Squadban van',
+    step1t:'Hozz létre csoportot', step1d:'Nevezd el csapatodat, add hozzá a barátokat linken keresztül.',
+    step2t:'Használjátok együtt', step2d:'Tervezz, oszd el a kiadásokat, adj hozzá fotókat — mindenki a saját telefonjáról.',
+    step3t:'Éljetek teljes életet', step3d:'Kevesebb szervezési káosz, több szórakozás.',
+    priceEyebrow:'Árak', priceTitle:'Kezdj ingyenesen. Fizess csak amikor nősz.',
+    priceSub:'Az alapfunkciók örökre ingyenesek maradnak.', priceNote:'Minden csomag 14 napos ingyenes próbaidőszakot tartalmaz. Kötelezettség nélkül.',
+    per:'/hó', badge:'Legnépszerűbb',
+    freeName:'Free', freeDesc:'Tökéletes kipróbáláshoz — hitelkártya nélkül.', freeBtn:'Ingyenes kezdés',
+    proName:'Squad Pro', proDesc:'A csapatnak aki komolyan gondolja.', proBtn:'Pro kipróbálása',
+    teamName:'Squad Team', teamDesc:'Nagy csoportok és rendezvényszervezők számára.', teamBtn:'Team kipróbálása',
+    ff:['1 csoport','Max 5 tag','Szavazás és rendezvénytervezés','Kiadások felosztása','Fotó-idővonal','Korlátlan csoportok','Kiadások exportálása (PDF)'],
+    pf:['Korlátlan csoportok','Korlátlan tagok','Szavazás és rendezvénytervezés','Kiadások felosztása','Fotó-idővonal','Kölcsönzött dolgok + emlékeztetők','Kiadások exportálása (PDF)'],
+    tf:['Minden ami Próban','50 tagig','Kiadási statisztikák','Egyéni csoport URL','QR kódos meghívók','Elsőbbségi támogatás','Korai hozzáférés'],
+    ctaEyebrow:'Kezdj el', ctaTitle:'Hozd el csapatodat a Squadba',
+    ctaSub:'Hozz létre egy ingyenes fiókot és kezdj el tervezni.',
+    ctaPrimary:'Ingyenes fiók létrehozása →', ctaSecondary:'Bejelentkezés',
+    footer:['Adatvédelem','Feltételek','Kapcsolat'],
+    demoSub:'Minden funkció úgy tervezve, hogy gondolkodás nélkül lehessen használni.',
+    mock:{group:'Meet with friends',members:'5 tag ▾',where:'Hova megyünk?',expenses:'Mai kiadások',exp1:'Sör',exp2:'Pizza',nav:['Terv','Split','Fotó','Kölcsön']},
+    demo:{
+      plan:{eye:'Szavazás',title:'Hova menünk? A többség dönt.',desc:'Hozz létre egy eseményt több lehetőséggel. Mindenki egy koppintással szavaz.',p1:'<b>Valós idejű szavazás</b> — azonnal látod az eredményeket',p2:'<b>Tagok elérhetősége</b> — mindenki jelzi mikor ér rá',p3:'<b>Győztes értesítése</b> — Squad bejelenti az eredményt',mockHdr:'Hova megyünk ezen a szombaton?',mockAvail:'Mikor tudtok?'},
+      split:{eye:'Felosztás',title:'Ki mit tartozik? Squad tudja.',desc:'Csak add meg ki fizetett és hány főre. Squad kiszámolja az összes tartozást.'},
+      photo:{eye:'Emlékek',title:'Minden fotó egy helyen.',desc:'Minden eseménynek saját albuma van. Minden tag adhat hozzá fotókat.'},
+      borrow:{eye:'Kölcsönzött dolgok',title:'Soha több elfelejtett töltő.',desc:'Jegyezd fel mit és kinek adtál kölcsön. Squad automatikusan küld emlékeztetőket.'},
+    },
+  },
+  uk:{
+    flag:'🇺🇦',short:'UK',
+    login:'Увійти',reg:'Реєстрація',
+    nav:['Функції','Демо','Ціни','Як це працює'],
+    heroTitle:'Твоя компанія.<br>Один <em>Squad</em>.',
+    heroSub:'Плануй зустрічі, ділись витратами, збирай спогади і не забувай про позичені речі.',
+    heroPrimary:'Створити акаунт безкоштовно ✦', heroSecondary:'Переглянути демо →',
+    stat1:'менше суперечок куди йти', stat2:'забутих боргів', stat3:'збережених спогадів',
+    featEyebrow:'Функції', featTitle:'Все що потрібно твоїй компанії',
+    featSub:'Більше не потрібно перемикатися між Doodle, Splitwise і WhatsApp.',
+    feat1n:'Плануй без суперечок', feat1d:'Запропонуй дати і місця, всі голосують.', feat1t:'без суперечок',
+    feat2n:'Ділись витратами', feat2d:'Хтось заплатив за всіх? Squad порахує хто що винен.', feat2t:'легко і швидко',
+    feat3n:'Спогади групи', feat3d:'Кожен учасник може додавати фото. Результат — спільний альбом.', feat3t:'ваш спільний альбом',
+    feat4n:'Позичені речі', feat4d:'Позичив зарядку? Книгу? Запиши і Squad надішле нагадування.', feat4t:'нічого не забуто',
+    demoEyebrow:'Демо', demoTitle:'Подивись як це виглядає',
+    demoTabs:['📅 План','💸 Витрати','📸 Спогади','🔔 Позичені'],
+    howEyebrow:'Як це працює', howTitle:'Три кроки і ваша компанія у Squad',
+    step1t:'Створи групу', step1d:'Назви свою компанію, додай друзів через посилання.',
+    step2t:'Використовуйте разом', step2d:'Плануйте, діліть витрати, додавайте фото — кожен зі свого телефону.',
+    step3t:'Живіть повним життям', step3d:'Менше організаційного хаосу, більше веселощів.',
+    priceEyebrow:'Ціни', priceTitle:'Почни безкоштовно. Плати лише коли ростеш.',
+    priceSub:'Базові функції назавжди залишаться безкоштовними.', priceNote:'Всі плани містять 14-денний безкоштовний пробний період. Без зобовязань.',
+    per:'/місяць', badge:'Найпопулярніший',
+    freeName:'Free', freeDesc:'Ідеально для ознайомлення — без кредитної картки.', freeBtn:'Почати безкоштовно',
+    proName:'Squad Pro', proDesc:'Для компанії яка ставиться серйозно.', proBtn:'Спробувати Pro',
+    teamName:'Squad Team', teamDesc:'Для великих груп та організаторів заходів.', teamBtn:'Спробувати Team',
+    ff:['1 група','Макс. 5 учасників','Голосування та планування','Розподіл витрат','Фото-таймлайн','Необмежені групи','Експорт витрат (PDF)'],
+    pf:['Необмежені групи','Необмежені учасники','Голосування та планування','Розподіл витрат','Фото-таймлайн','Позичені речі + нагадування','Експорт витрат (PDF)'],
+    tf:['Все з Pro','До 50 учасників','Статистика витрат','Власний URL групи','QR-запрошення','Пріоритетна підтримка','Ранній доступ'],
+    ctaEyebrow:'Почати', ctaTitle:'Приведи свою компанію до Squad',
+    ctaSub:'Створи безкоштовний акаунт і починай планувати.',
+    ctaPrimary:'Створити акаунт безкоштовно →', ctaSecondary:'Увійти',
+    footer:['Конфіденційність','Умови','Контакт'],
+    demoSub:'Кожна функція розроблена так, щоб використовувати її не думаючи.',
+    mock:{group:'Meet with friends',members:'5 учасників ▾',where:'Куди йдемо?',expenses:'Витрати сьогодні',exp1:'Пиво',exp2:'Піца',nav:['План','Split','Фото','Позич.']},
+    demo:{
+      plan:{eye:'Голосування',title:'Куди йдемо? Нехай вирішить більшість.',desc:'Створи подію з кількома варіантами. Кожен учасник голосує одним дотиком.',p1:'<b>Голосування в реальному часі</b> — бачиш результати як голосують друзі',p2:'<b>Доступність учасників</b> — кожен позначає коли може',p3:'<b>Повідомлення переможця</b> — Squad оголошує результат',mockHdr:'Куди йдемо цієї суботи?',mockAvail:'Коли можете?'},
+      split:{eye:'Розподіл',title:'Хто кому винен? Squad знає.',desc:'Просто вкажи хто заплатив і за скількох. Squad підрахує всі борги.'},
+      photo:{eye:'Спогади',title:'Всі фото в одному місці.',desc:'Кожна подія має власний альбом. Кожен учасник може додавати фото.'},
+      borrow:{eye:'Позичені речі',title:'Ніколи більше забутого зарядника.',desc:'Запиши що і кому позичив. Squad автоматично надсилає нагадування.'},
+    },
+  },
+  ru:{
+    flag:'🇷🇺',short:'RU',
+    login:'Войти',reg:'Регистрация',
+    nav:['Функции','Демо','Цены','Как это работает'],
+    heroTitle:'Твоя компания.<br>Один <em>Squad</em>.',
+    heroSub:'Планируй встречи, делись расходами, собирай воспоминания и не забывай о взятых вещах.',
+    heroPrimary:'Создать аккаунт бесплатно ✦', heroSecondary:'Посмотреть демо →',
+    stat1:'меньше споров куда идти', stat2:'забытых долгов', stat3:'сохранённых воспоминаний',
+    featEyebrow:'Функции', featTitle:'Всё что нужно твоей компании',
+    featSub:'Больше не нужно переключаться между Doodle, Splitwise и WhatsApp.',
+    feat1n:'Планируй без споров', feat1d:'Предложи даты и места, все голосуют.', feat1t:'никаких споров',
+    feat2n:'Делите расходы', feat2d:'Кто-то заплатил за всех? Squad посчитает кто что должен.', feat2t:'легко и быстро',
+    feat3n:'Воспоминания группы', feat3d:'Каждый участник может добавлять фото.', feat3t:'ваш общий альбом',
+    feat4n:'Взятые вещи', feat4d:'Взял зарядку? Книгу? Запиши и Squad пришлёт напоминание.', feat4t:'ничего не забыто',
+    demoEyebrow:'Демо', demoTitle:'Посмотри как это выглядит',
+    demoTabs:['📅 План','💸 Расходы','📸 Воспоминания','🔔 Взятые'],
+    howEyebrow:'Как это работает', howTitle:'Три шага и ваша компания в Squad',
+    step1t:'Создай группу', step1d:'Назови свою компанию, добавь друзей по ссылке.',
+    step2t:'Используйте вместе', step2d:'Планируйте, делите расходы, добавляйте фото — каждый со своего телефона.',
+    step3t:'Живите полной жизнью', step3d:'Меньше организационного хаоса, больше веселья.',
+    priceEyebrow:'Цены', priceTitle:'Начни бесплатно. Плати только когда растёшь.',
+    priceSub:'Базовые функции навсегда останутся бесплатными.', priceNote:'Все планы включают 14-дневный бесплатный пробный период. Без обязательств.',
+    per:'/месяц', badge:'Самый популярный',
+    freeName:'Free', freeDesc:'Идеально для знакомства — без кредитной карты.', freeBtn:'Начать бесплатно',
+    proName:'Squad Pro', proDesc:'Для компании которая настроена серьёзно.', proBtn:'Попробовать Pro',
+    teamName:'Squad Team', teamDesc:'Для больших групп и организаторов мероприятий.', teamBtn:'Попробовать Team',
+    ff:['1 группа','Макс. 5 участников','Голосование и планирование','Разделение расходов','Фото-таймлайн','Неограниченные группы','Экспорт расходов (PDF)'],
+    pf:['Неограниченные группы','Неограниченные участники','Голосование и планирование','Разделение расходов','Фото-таймлайн','Взятые вещи + напоминания','Экспорт расходов (PDF)'],
+    tf:['Всё из Pro','До 50 участников','Статистика расходов','Собственный URL группы','QR-приглашения','Приоритетная поддержка','Ранний доступ'],
+    ctaEyebrow:'Начать', ctaTitle:'Приведи свою компанию в Squad',
+    ctaSub:'Создай бесплатный аккаунт и начни планировать.',
+    ctaPrimary:'Создать аккаунт бесплатно →', ctaSecondary:'Войти',
+    footer:['Конфиденциальность','Условия','Контакт'],
+    demoSub:'Каждая функция разработана так, чтобы использовать её не думая.',
+    mock:{group:'Meet with friends',members:'5 участников ▾',where:'Куда идём?',expenses:'Расходы сегодня',exp1:'Пиво',exp2:'Пицца',nav:['План','Split','Фото','Займ.']},
+    demo:{
+      plan:{eye:'Голосование',title:'Куда идём? Пусть решит большинство.',desc:'Создай событие с несколькими вариантами. Каждый участник голосует одним нажатием.',p1:'<b>Голосование в реальном времени</b> — видишь результаты как голосуют друзья',p2:'<b>Доступность участников</b> — каждый отмечает когда может',p3:'<b>Уведомление победителя</b> — Squad объявляет результат',mockHdr:'Куда идём в эту субботу?',mockAvail:'Когда можете?'},
+      split:{eye:'Разделение',title:'Кто кому должен? Squad знает.',desc:'Просто укажи кто заплатил и за скольких. Squad подсчитает все долги.'},
+      photo:{eye:'Воспоминания',title:'Все фото в одном месте.',desc:'У каждого события свой альбом. Каждый участник может добавлять фото.'},
+      borrow:{eye:'Взятые вещи',title:'Никогда больше забытой зарядки.',desc:'Запиши что и кому одолжил. Squad автоматически отправляет напоминания.'},
+    },
+  },
+  it:{
+    flag:'🇮🇹',short:'IT',
+    login:'Accedi',reg:'Registrati',
+    nav:['Funzioni','Demo','Prezzi','Come funziona'],
+    heroTitle:'Il tuo gruppo.<br>Un solo <em>Squad</em>.',
+    heroSub:'Pianifica uscite, dividi le spese, raccogli ricordi e non dimenticare le cose in prestito.',
+    heroPrimary:'Crea account gratuito ✦', heroSecondary:'Guarda il demo →',
+    stat1:'meno litigi su dove andare', stat2:'debiti dimenticati', stat3:'ricordi salvati',
+    featEyebrow:'Funzioni', featTitle:'Tutto ciò di cui il tuo gruppo ha bisogno',
+    featSub:'Niente più passaggi tra Doodle, Splitwise e WhatsApp.',
+    feat1n:'Pianifica senza litigi', feat1d:'Suggerisci date e luoghi, tutti votano.', feat1t:'niente litigi',
+    feat2n:'Dividi le spese', feat2d:'Qualcuno ha pagato per tutti? Squad calcola chi deve cosa.', feat2t:'facile e veloce',
+    feat3n:'Ricordi del gruppo', feat3d:'Ogni membro può aggiungere foto. Il risultato è un album condiviso.', feat3t:'il vostro album condiviso',
+    feat4n:'Cose in prestito', feat4d:'Hai prestato un caricatore? Un libro? Registralo e Squad invierà promemoria.', feat4t:'niente dimenticato',
+    demoEyebrow:'Demo', demoTitle:'Guarda come funziona',
+    demoTabs:['📅 Piano','💸 Spese','📸 Ricordi','🔔 Prestiti'],
+    howEyebrow:'Come funziona', howTitle:'Tre passaggi e il tuo gruppo è in Squad',
+    step1t:'Crea un gruppo', step1d:'Dai un nome al tuo gruppo, aggiungi amici tramite link.',
+    step2t:'Usatelo insieme', step2d:'Pianificate, dividete spese, aggiungete foto — ognuno dal proprio telefono.',
+    step3t:'Vivete a pieno', step3d:'Meno caos organizzativo, più divertimento.',
+    priceEyebrow:'Prezzi', priceTitle:'Inizia gratis. Paga solo quando cresci.',
+    priceSub:'Le funzioni base sono e rimarranno sempre gratuite.', priceNote:'Tutti i piani includono 14 giorni di prova gratuita. Senza impegno.',
+    per:'/mese', badge:'Più popolare',
+    freeName:'Free', freeDesc:'Perfetto per provare — senza carta di credito.', freeBtn:'Inizia gratis',
+    proName:'Squad Pro', proDesc:'Per il gruppo che fa sul serio.', proBtn:'Prova Pro',
+    teamName:'Squad Team', teamDesc:'Per gruppi grandi e organizzatori di eventi.', teamBtn:'Prova Team',
+    ff:['1 gruppo','Max 5 membri','Votazioni e pianificazione','Suddivisione spese','Foto timeline','Gruppi illimitati','Export spese (PDF)'],
+    pf:['Gruppi illimitati','Membri illimitati','Votazioni e pianificazione','Suddivisione spese','Foto timeline','Oggetti prestati + promemoria','Export spese (PDF)'],
+    tf:['Tutto in Pro','Fino a 50 membri','Statistiche spese','URL gruppo personalizzato','Inviti QR','Supporto prioritario','Accesso anticipato'],
+    ctaEyebrow:'Inizia ora', ctaTitle:'Porta il tuo gruppo su Squad',
+    ctaSub:'Crea un account gratuito e inizia a pianificare.',
+    ctaPrimary:'Crea account gratuito →', ctaSecondary:'Accedi',
+    footer:['Privacy','Termini','Contatto'],
+    demoSub:'Ogni funzione progettata per essere usata senza pensarci.',
+    mock:{group:'Meet with friends',members:'5 membri ▾',where:'Dove andiamo?',expenses:'Spese oggi',exp1:'Birra',exp2:'Pizza',nav:['Piano','Split','Foto','Prestiti']},
+    demo:{
+      plan:{eye:'Votazione',title:'Dove andiamo? Che decida la maggioranza.',desc:'Crea un evento con più opzioni. Ogni membro vota con un tap.',p1:'<b>Votazione in tempo reale</b> — vedi i risultati appena gli amici votano',p2:'<b>Disponibilità dei membri</b> — ognuno segna quando può',p3:'<b>Notifica del vincitore</b> — Squad annuncia il risultato',mockHdr:'Dove andiamo questo sabato?',mockAvail:'Quando potete?'},
+      split:{eye:'Suddivisione',title:'Chi deve cosa? Squad lo sa.',desc:'Basta inserire chi ha pagato e per quanti. Squad calcola tutti i debiti.'},
+      photo:{eye:'Ricordi',title:'Tutte le foto in un posto.',desc:'Ogni evento ha il suo album. Ogni membro può aggiungere foto.'},
+      borrow:{eye:'Cose in prestito',title:'Mai più un caricatore dimenticato.',desc:'Registra cosa hai prestato a chi. Squad invia automaticamente promemoria.'},
+    },
+  },
+  es:{
+    flag:'🇪🇸',short:'ES',
+    login:'Iniciar sesión',reg:'Registrarse',
+    nav:['Funciones','Demo','Precios','Cómo funciona'],
+    heroTitle:'Tu grupo.<br>Un solo <em>Squad</em>.',
+    heroSub:'Planifica salidas, divide gastos, colecciona recuerdos y no olvides las cosas prestadas.',
+    heroPrimary:'Crear cuenta gratis ✦', heroSecondary:'Ver demo →',
+    stat1:'menos discusiones sobre adónde ir', stat2:'deudas olvidadas', stat3:'recuerdos guardados',
+    featEyebrow:'Funciones', featTitle:'Todo lo que tu grupo necesita',
+    featSub:'Sin más cambios entre Doodle, Splitwise y WhatsApp.',
+    feat1n:'Planifica sin discusiones', feat1d:'Sugiere fechas y lugares, todos votan.', feat1t:'sin discusiones',
+    feat2n:'Divide gastos', feat2d:'¿Alguien pagó por todos? Squad calcula quién debe qué.', feat2t:'fácil y rápido',
+    feat3n:'Recuerdos del grupo', feat3d:'Cada miembro puede añadir fotos. El resultado es un álbum compartido.', feat3t:'vuestro álbum compartido',
+    feat4n:'Cosas prestadas', feat4d:'¿Prestaste un cargador? ¿Un libro? Regístralo y Squad enviará recordatorios.', feat4t:'nada olvidado',
+    demoEyebrow:'Demo', demoTitle:'Mira cómo funciona',
+    demoTabs:['📅 Plan','💸 Gastos','📸 Recuerdos','🔔 Prestados'],
+    howEyebrow:'Cómo funciona', howTitle:'Tres pasos y tu grupo está en Squad',
+    step1t:'Crea un grupo', step1d:'Ponle nombre a tu grupo, añade amigos mediante link.',
+    step2t:'Úsalo juntos', step2d:'Planificad, dividid gastos, añadid fotos — cada uno desde su teléfono.',
+    step3t:'Vivid al máximo', step3d:'Menos caos organizativo, más diversión.',
+    priceEyebrow:'Precios', priceTitle:'Empieza gratis. Paga solo cuando crezcas.',
+    priceSub:'Las funciones básicas son y serán siempre gratuitas.', priceNote:'Todos los planes incluyen 14 días de prueba gratuita. Sin compromiso.',
+    per:'/mes', badge:'Más popular',
+    freeName:'Free', freeDesc:'Perfecto para probar — sin tarjeta de crédito.', freeBtn:'Empezar gratis',
+    proName:'Squad Pro', proDesc:'Para el grupo que lo toma en serio.', proBtn:'Probar Pro',
+    teamName:'Squad Team', teamDesc:'Para grupos grandes y organizadores de eventos.', teamBtn:'Probar Team',
+    ff:['1 grupo','Máx. 5 miembros','Votaciones y planificación','División de gastos','Foto timeline','Grupos ilimitados','Export de gastos (PDF)'],
+    pf:['Grupos ilimitados','Miembros ilimitados','Votaciones y planificación','División de gastos','Foto timeline','Cosas prestadas + recordatorios','Export de gastos (PDF)'],
+    tf:['Todo en Pro','Hasta 50 miembros','Estadísticas de gastos','URL de grupo personalizada','Invitaciones QR','Soporte prioritario','Acceso anticipado'],
+    ctaEyebrow:'Empieza ya', ctaTitle:'Trae a tu grupo a Squad',
+    ctaSub:'Crea una cuenta gratis y empieza a planificar.',
+    ctaPrimary:'Crear cuenta gratis →', ctaSecondary:'Iniciar sesión',
+    footer:['Privacidad','Términos','Contacto'],
+    demoSub:'Cada función diseñada para usarse sin pensar.',
+    mock:{group:'Meet with friends',members:'5 miembros ▾',where:'¿A dónde vamos?',expenses:'Gastos hoy',exp1:'Cerveza',exp2:'Pizza',nav:['Plan','Split','Fotos','Prestados']},
+    demo:{
+      plan:{eye:'Votación',title:'¿A dónde vamos? Que decida la mayoría.',desc:'Crea un evento con múltiples opciones. Cada miembro vota con un toque.',p1:'<b>Votación en tiempo real</b> — ves los resultados conforme votan',p2:'<b>Disponibilidad de miembros</b> — cada uno marca cuándo puede',p3:'<b>Notificación del ganador</b> — Squad anuncia el resultado',mockHdr:'¿A dónde vamos este sábado?',mockAvail:'¿Cuándo podéis?'},
+      split:{eye:'División',title:'¿Quién debe qué? Squad lo sabe.',desc:'Solo indica quién pagó y para cuántos. Squad calcula todas las deudas.'},
+      photo:{eye:'Recuerdos',title:'Todas las fotos en un lugar.',desc:'Cada evento tiene su propio álbum. Cada miembro puede añadir fotos.'},
+      borrow:{eye:'Cosas prestadas',title:'Nunca más un cargador olvidado.',desc:'Registra qué has prestado a quién. Squad envía recordatorios automáticamente.'},
+    },
+  },
+  fr:{
+    flag:'🇫🇷',short:'FR',
+    login:'Se connecter',reg:"S'inscrire",
+    nav:['Fonctions','Démo','Prix','Comment ça marche'],
+    heroTitle:'Ton groupe.<br>Un seul <em>Squad</em>.',
+    heroSub:'Planifie des sorties, partage les dépenses, collecte des souvenirs et ne perds plus rien.',
+    heroPrimary:'Créer un compte gratuit ✦', heroSecondary:'Voir la démo →',
+    stat1:'moins de disputes sur où aller', stat2:'dettes oubliées', stat3:'souvenirs sauvegardés',
+    featEyebrow:'Fonctions', featTitle:'Tout ce dont ton groupe a besoin',
+    featSub:'Fini les allers-retours entre Doodle, Splitwise et WhatsApp.',
+    feat1n:'Planifie sans disputes', feat1d:'Suggère des dates et lieux, tout le monde vote.', feat1t:'sans disputes',
+    feat2n:'Partage les dépenses', feat2d:"Quelqu'un a payé pour tous? Squad calcule qui doit quoi.", feat2t:'facile et rapide',
+    feat3n:'Souvenirs du groupe', feat3d:'Chaque membre peut ajouter des photos. Le résultat est un album partagé.', feat3t:'votre album partagé',
+    feat4n:'Objets empruntés', feat4d:"Tu as prêté un chargeur? Un livre? Note-le et Squad enverra des rappels.", feat4t:"rien d'oublié",
+    demoEyebrow:'Démo', demoTitle:'Voir comment ça fonctionne',
+    demoTabs:['📅 Plan','💸 Dépenses','📸 Souvenirs','🔔 Prêts'],
+    howEyebrow:'Comment ça marche', howTitle:'Trois étapes et ton groupe est dans Squad',
+    step1t:'Crée un groupe', step1d:'Nomme ton groupe, ajoute des amis via un lien.',
+    step2t:'Utilisez-le ensemble', step2d:'Planifiez, partagez les dépenses, ajoutez des photos — chacun depuis son téléphone.',
+    step3t:'Vivez pleinement', step3d:'Moins de chaos organisationnel, plus de fun.',
+    priceEyebrow:'Prix', priceTitle:'Commence gratuitement. Paie seulement quand tu grandis.',
+    priceSub:'Les fonctions de base sont et resteront toujours gratuites.', priceNote:"Tous les plans incluent 14 jours d'essai gratuit. Sans engagement.",
+    per:'/mois', badge:'Le plus populaire',
+    freeName:'Free', freeDesc:'Parfait pour essayer — sans carte bancaire.', freeBtn:'Commencer gratuitement',
+    proName:'Squad Pro', proDesc:"Pour le groupe qui prend ça au sérieux.", proBtn:'Essayer Pro',
+    teamName:'Squad Team', teamDesc:'Pour les grands groupes et organisateurs.', teamBtn:'Essayer Team',
+    ff:['1 groupe','Max 5 membres','Votes et planification','Partage des dépenses','Chronologie photos','Groupes illimités','Export des dépenses (PDF)'],
+    pf:['Groupes illimités','Membres illimités','Votes et planification','Partage des dépenses','Chronologie photos','Objets prêtés + rappels','Export des dépenses (PDF)'],
+    tf:['Tout dans Pro',"Jusqu'à 50 membres",'Statistiques des dépenses','URL de groupe personnalisée','Invitations QR','Support prioritaire','Accès anticipé'],
+    ctaEyebrow:'Commencer', ctaTitle:'Amène ton groupe sur Squad',
+    ctaSub:'Crée un compte gratuit et commence à planifier.',
+    ctaPrimary:'Créer un compte gratuit →', ctaSecondary:'Se connecter',
+    footer:['Confidentialité','Conditions','Contact'],
+    demoSub:'Chaque fonctionnalité conçue pour être utilisée sans réfléchir.',
+    mock:{group:'Meet with friends',members:'5 membres ▾',where:'Où allons-nous?',expenses:'Dépenses du jour',exp1:'Bière',exp2:'Pizza',nav:['Plan','Split','Photos','Prêts']},
+    demo:{
+      plan:{eye:'Vote',title:'Où allons-nous? Que la majorité décide.',desc:'Crée un événement avec plusieurs options. Chaque membre vote en un tap.',p1:'<b>Vote en temps réel</b> — tu vois les résultats au fur et à mesure',p2:'<b>Disponibilité des membres</b> — chacun indique quand il peut',p3:'<b>Notification du gagnant</b> — Squad annonce le résultat',mockHdr:'Où allons-nous ce samedi?',mockAvail:'Quand pouvez-vous?'},
+      split:{eye:'Répartition',title:'Qui doit quoi? Squad le sait.',desc:'Indique simplement qui a payé et pour combien. Squad calcule toutes les dettes.'},
+      photo:{eye:'Souvenirs',title:'Toutes les photos au même endroit.',desc:'Chaque événement a son propre album. Chaque membre peut ajouter des photos.'},
+      borrow:{eye:'Objets empruntés',title:'Plus jamais de chargeur oublié.',desc:'Note ce que tu as prêté à qui. Squad envoie automatiquement des rappels.'},
+    },
+  },
+}
+
+const DEMO_EXTRA = {"sk": {"mock": {"v1": "Bowling", "v2": "Kino", "v3": "Fitko"}, "plan": {"ml1": "Bowling", "ms1": "Sob 24.5. · 20:00", "ml2": "Kino", "ms2": "Sob 24.5. · 19:00", "ml3": "Fitko", "ms3": "Sob 24.5. · 20:30", "mockHdr": "Kde ideme túto sobotu?", "mockAvail": "Kedy môžete?", "p1": "<b>Hlasovanie v reálnom čase</b> — vidíš výsledky ihneď", "p2": "<b>Dostupnosť členov</b> — každý označí kedy môže", "p3": "<b>Notifikácia víťaza</b> — Squad oznámi výsledok skupine"}, "split": {"ml1": "Pivo", "ms1": "Tomáš · 5 ľudí", "ml2": "Pizza", "ms2": "Jana · 4 ľudia", "p1": "<b>Automatický výpočet</b> — Squad spočíta vyúčtovanie", "p2": "<b>Potvrdenie platby</b> — jedným tapom oznámíš že si zaplatil", "p3": "<b>História výdavkov</b> — všetky akcie prehľadne"}, "photo": {"p1": "<b>Shared album</b> — fotky od všetkých členov skupiny", "p2": "<b>Timeline akcií</b> — každá akcia má vlastný album", "p3": "<b>Likes a komentáre</b> — reaguj na fotky kamarátov"}, "borrow": {"ml1": "Nabíjačka Samsung", "ms1": "Od Petra · 10. 5.", "ml2": "Slúchadlá Sony", "ms2": "Janovi · 15. 5.", "ml3": "Atomic Habits", "ms3": "Martinovi · 2. 5.", "p1": "<b>Automatické remindery</b> — Squad pošle správu za teba", "p2": "<b>Farebné upozornenia</b> — hneď vidíš čo je dlho preč", "p3": "<b>Obojsmerné</b> — vidíš čo si ty požičal aj čo si požičal iným"}}, "cs": {"mock": {"v1": "Bowling", "v2": "Kino", "v3": "Fitness"}, "plan": {"ml1": "Bowling", "ms1": "Sob 24.5. · 20:00", "ml2": "Kino", "ms2": "Sob 24.5. · 19:00", "ml3": "Fitness", "ms3": "Sob 24.5. · 20:30", "mockHdr": "Kam jdeme tuto sobotu?", "mockAvail": "Kdy můžete?", "p1": "<b>Hlasování v reálném čase</b> — vidíš výsledky okamžitě", "p2": "<b>Dostupnost členů</b> — každý označí kdy může", "p3": "<b>Notifikace vítěze</b> — Squad oznámí výsledek skupině"}, "split": {"ml1": "Pivo", "ms1": "Tomáš · 5 lidí", "ml2": "Pizza", "ms2": "Jana · 4 lidé", "p1": "<b>Automatický výpočet</b> — Squad spočítá vyúčtování", "p2": "<b>Potvrzení platby</b> — jedním tapem oznámíš že jsi zaplatil", "p3": "<b>Historie výdajů</b> — vše přehledně na jednom místě"}, "photo": {"p1": "<b>Sdílené album</b> — fotky od všech členů skupiny", "p2": "<b>Timeline akcí</b> — každá akce má vlastní album", "p3": "<b>Lajky a komentáře</b> — reaguj na fotky kamarádů"}, "borrow": {"ml1": "Nabíječka Samsung", "ms1": "Od Petra · 10. 5.", "ml2": "Sluchátka Sony", "ms2": "Janovi · 15. 5.", "ml3": "Atomic Habits", "ms3": "Martinovi · 2. 5.", "p1": "<b>Automatické připomínky</b> — Squad pošle zprávu za tebe", "p2": "<b>Barevná upozornění</b> — ihned vidíš co je dlouho pryč", "p3": "<b>Obousměrné</b> — vidíš co sis půjčil i co jsi půjčil jiným"}}, "en": {"mock": {"v1": "Bowling", "v2": "Cinema", "v3": "Gym"}, "plan": {"ml1": "Bowling", "ms1": "Sat 24.5. · 20:00", "ml2": "Cinema", "ms2": "Sat 24.5. · 19:00", "ml3": "Gym", "ms3": "Sat 24.5. · 20:30", "mockHdr": "Where are we going this Saturday?", "mockAvail": "When can you?", "p1": "<b>Real-time voting</b> — see results as friends vote", "p2": "<b>Member availability</b> — everyone marks when they can", "p3": "<b>Winner notification</b> — Squad announces the result"}, "split": {"ml1": "Beer", "ms1": "Tom · 5 people", "ml2": "Pizza", "ms2": "Jane · 4 people", "p1": "<b>Auto calculation</b> — Squad computes the optimal split", "p2": "<b>Payment confirmation</b> — one tap to confirm you paid", "p3": "<b>Expense history</b> — all events and costs in one place"}, "photo": {"p1": "<b>Shared album</b> — photos from all group members", "p2": "<b>Event timeline</b> — each event has its own album", "p3": "<b>Likes & comments</b> — react to friends' photos in the app"}, "borrow": {"ml1": "Samsung charger", "ms1": "From Peter · 10 May", "ml2": "Sony headphones", "ms2": "To Jane · 15 May", "ml3": "Atomic Habits", "ms3": "To Martin · 2 May", "p1": "<b>Auto reminders</b> — Squad sends the message for you", "p2": "<b>Color alerts</b> — instantly see what's been away too long", "p3": "<b>Two-way tracking</b> — see what you borrowed and what you lent"}}, "de": {"mock": {"v1": "Bowling", "v2": "Kino", "v3": "Fitnessstudio"}, "plan": {"ml1": "Bowling", "ms1": "Sa 24.5. · 20:00", "ml2": "Kino", "ms2": "Sa 24.5. · 19:00", "ml3": "Fitness", "ms3": "Sa 24.5. · 20:30", "mockHdr": "Wohin gehen wir diesen Samstag?", "mockAvail": "Wann könnt ihr?", "p1": "<b>Echtzeit-Abstimmung</b> — sieh Ergebnisse sofort", "p2": "<b>Verfügbarkeit der Mitglieder</b> — jeder markiert wann er kann", "p3": "<b>Gewinner-Benachrichtigung</b> — Squad kündigt das Ergebnis an"}, "split": {"ml1": "Bier", "ms1": "Thomas · 5 Leute", "ml2": "Pizza", "ms2": "Jana · 4 Leute", "p1": "<b>Automatische Berechnung</b> — Squad berechnet die Aufteilung", "p2": "<b>Zahlungsbestätigung</b> — ein Tippen reicht", "p3": "<b>Ausgabenhistorie</b> — alles übersichtlich an einem Ort"}, "photo": {"p1": "<b>Geteiltes Album</b> — Fotos aller Gruppenmitglieder", "p2": "<b>Event-Timeline</b> — jedes Event hat sein eigenes Album", "p3": "<b>Likes & Kommentare</b> — reagiere auf Fotos deiner Freunde"}, "borrow": {"ml1": "Samsung-Ladekabel", "ms1": "Von Peter · 10. Mai", "ml2": "Sony-Kopfhörer", "ms2": "An Jana · 15. Mai", "ml3": "Atomic Habits", "ms3": "An Martin · 2. Mai", "p1": "<b>Auto-Erinnerungen</b> — Squad schickt die Nachricht für dich", "p2": "<b>Farbige Hinweise</b> — sieh sofort was zu lang weg ist", "p3": "<b>Bidirektional</b> — sieh was du geliehen und verliehen hast"}}, "pl": {"mock": {"v1": "Kręgle", "v2": "Kino", "v3": "Siłownia"}, "plan": {"ml1": "Kręgle", "ms1": "Sob 24.5. · 20:00", "ml2": "Kino", "ms2": "Sob 24.5. · 19:00", "ml3": "Siłownia", "ms3": "Sob 24.5. · 20:30", "mockHdr": "Dokąd idziemy w tę sobotę?", "mockAvail": "Kiedy możecie?", "p1": "<b>Głosowanie na żywo</b> — widzisz wyniki natychmiast", "p2": "<b>Dostępność członków</b> — każdy oznacza kiedy może", "p3": "<b>Powiadomienie o wyniku</b> — Squad ogłasza zwycięzcę"}, "split": {"ml1": "Piwo", "ms1": "Tomáš · 5 osób", "ml2": "Pizza", "ms2": "Jana · 4 osoby", "p1": "<b>Automatyczne obliczenia</b> — Squad wyliczy podział", "p2": "<b>Potwierdzenie płatności</b> — jednym tapnięciem", "p3": "<b>Historia wydatków</b> — wszystko przejrzyście"}, "photo": {"p1": "<b>Wspólny album</b> — zdjęcia od wszystkich członków", "p2": "<b>Oś czasu wydarzeń</b> — każde wydarzenie ma własny album", "p3": "<b>Lajki i komentarze</b> — reaguj na zdjęcia znajomych"}, "borrow": {"ml1": "Ładowarka Samsung", "ms1": "Od Piotra · 10 maj", "ml2": "Słuchawki Sony", "ms2": "Jance · 15 maj", "ml3": "Atomic Habits", "ms3": "Marcinowi · 2 maj", "p1": "<b>Automatyczne przypomnienia</b> — Squad wyśle wiadomość", "p2": "<b>Kolorowe alerty</b> — widzisz co za długo nie wróciło", "p3": "<b>Dwukierunkowe</b> — widzisz co pożyczyłeś i co masz pożyczone"}}, "hu": {"mock": {"v1": "Bowling", "v2": "Mozi", "v3": "Edzőterem"}, "plan": {"ml1": "Bowling", "ms1": "Szo 24.5. · 20:00", "ml2": "Mozi", "ms2": "Szo 24.5. · 19:00", "ml3": "Edzőterem", "ms3": "Szo 24.5. · 20:30", "mockHdr": "Hova menjünk ezen a szombaton?", "mockAvail": "Mikor értek rá?", "p1": "<b>Valós idejű szavazás</b> — azonnali eredmények", "p2": "<b>Tagok elérhetősége</b> — mindenki megjelöli mikor ér rá", "p3": "<b>Győztes értesítés</b> — Squad bejelenti az eredményt"}, "split": {"ml1": "Sör", "ms1": "Tomáš · 5 fő", "ml2": "Pizza", "ms2": "Jana · 4 fő", "p1": "<b>Automatikus számítás</b> — Squad kiszámolja az elosztást", "p2": "<b>Fizetés megerősítése</b> — egy érintéssel", "p3": "<b>Kiadások előzménye</b> — minden áttekinthetően"}, "photo": {"p1": "<b>Megosztott album</b> — fotók az összes tagtól", "p2": "<b>Esemény-idővonal</b> — minden eseménynek saját albuma van", "p3": "<b>Lájkok és kommentek</b> — reagálj barátaid fotóira"}, "borrow": {"ml1": "Samsung töltő", "ms1": "Pétertől · máj. 10.", "ml2": "Sony fejhallgató", "ms2": "Janának · máj. 15.", "ml3": "Atomic Habits", "ms3": "Martinnak · máj. 2.", "p1": "<b>Automatikus emlékeztetők</b> — Squad küldi az üzenetet", "p2": "<b>Színes riasztások</b> — látod mi volt túl sokáig távol", "p3": "<b>Kétirányú</b> — látod mit kölcsönöztél és mit kaptál"}}, "uk": {"mock": {"v1": "Боулінг", "v2": "Кіно", "v3": "Спортзал"}, "plan": {"ml1": "Боулінг", "ms1": "Сб 24.5. · 20:00", "ml2": "Кіно", "ms2": "Сб 24.5. · 19:00", "ml3": "Спортзал", "ms3": "Сб 24.5. · 20:30", "mockHdr": "Куди йдемо цієї суботи?", "mockAvail": "Коли можете?", "p1": "<b>Голосування в реальному часі</b> — бачиш результати одразу", "p2": "<b>Доступність учасників</b> — кожен позначає коли може", "p3": "<b>Повідомлення переможця</b> — Squad оголошує результат"}, "split": {"ml1": "Пиво", "ms1": "Томаш · 5 осіб", "ml2": "Піца", "ms2": "Яна · 4 особи", "p1": "<b>Автоматичний розрахунок</b> — Squad підраховує розподіл", "p2": "<b>Підтвердження оплати</b> — одним дотиком", "p3": "<b>Історія витрат</b> — все наочно в одному місці"}, "photo": {"p1": "<b>Спільний альбом</b> — фото від усіх учасників групи", "p2": "<b>Таймлайн подій</b> — кожна подія має свій альбом", "p3": "<b>Лайки та коментарі</b> — реагуй на фото друзів"}, "borrow": {"ml1": "Зарядка Samsung", "ms1": "Від Петра · 10 трав.", "ml2": "Навушники Sony", "ms2": "Яні · 15 трав.", "ml3": "Atomic Habits", "ms3": "Мартину · 2 трав.", "p1": "<b>Автоматичні нагадування</b> — Squad надішле повідомлення", "p2": "<b>Кольорові сповіщення</b> — бачиш що давно не повернули", "p3": "<b>Двостороннє</b> — бачиш що позичив і що маєш позичене"}}, "ru": {"mock": {"v1": "Боулинг", "v2": "Кино", "v3": "Спортзал"}, "plan": {"ml1": "Боулинг", "ms1": "Сб 24.5. · 20:00", "ml2": "Кино", "ms2": "Сб 24.5. · 19:00", "ml3": "Спортзал", "ms3": "Сб 24.5. · 20:30", "mockHdr": "Куда идём в эту субботу?", "mockAvail": "Когда можете?", "p1": "<b>Голосование в реальном времени</b> — результаты сразу", "p2": "<b>Доступность участников</b> — каждый отмечает когда может", "p3": "<b>Уведомление победителя</b> — Squad объявляет результат"}, "split": {"ml1": "Пиво", "ms1": "Томаш · 5 чел.", "ml2": "Пицца", "ms2": "Яна · 4 чел.", "p1": "<b>Автоматический расчёт</b> — Squad считает разделение", "p2": "<b>Подтверждение оплаты</b> — одним нажатием", "p3": "<b>История расходов</b> — всё наглядно в одном месте"}, "photo": {"p1": "<b>Общий альбом</b> — фото от всех участников группы", "p2": "<b>Таймлайн событий</b> — у каждого события свой альбом", "p3": "<b>Лайки и комментарии</b> — реагируй на фото друзей"}, "borrow": {"ml1": "Зарядка Samsung", "ms1": "От Петра · 10 мая", "ml2": "Наушники Sony", "ms2": "Яне · 15 мая", "ml3": "Atomic Habits", "ms3": "Мартину · 2 мая", "p1": "<b>Автоматические напоминания</b> — Squad пришлёт сообщение", "p2": "<b>Цветные оповещения</b> — сразу видишь что давно не вернули", "p3": "<b>Двустороннее</b> — видишь что занял и что одолжил"}}, "it": {"mock": {"v1": "Bowling", "v2": "Cinema", "v3": "Palestra"}, "plan": {"ml1": "Bowling", "ms1": "Sab 24.5. · 20:00", "ml2": "Cinema", "ms2": "Sab 24.5. · 19:00", "ml3": "Palestra", "ms3": "Sab 24.5. · 20:30", "mockHdr": "Dove andiamo questo sabato?", "mockAvail": "Quando potete?", "p1": "<b>Votazione in tempo reale</b> — vedi i risultati subito", "p2": "<b>Disponibilità dei membri</b> — ognuno segna quando può", "p3": "<b>Notifica vincitore</b> — Squad annuncia il risultato"}, "split": {"ml1": "Birra", "ms1": "Tomáš · 5 persone", "ml2": "Pizza", "ms2": "Jana · 4 persone", "p1": "<b>Calcolo automatico</b> — Squad calcola la divisione", "p2": "<b>Conferma pagamento</b> — un tap e hai confermato", "p3": "<b>Storico spese</b> — tutto chiaro in un posto"}, "photo": {"p1": "<b>Album condiviso</b> — foto di tutti i membri del gruppo", "p2": "<b>Timeline eventi</b> — ogni evento ha il suo album", "p3": "<b>Like e commenti</b> — reagisci alle foto dei tuoi amici"}, "borrow": {"ml1": "Caricatore Samsung", "ms1": "Da Pietro · 10 mag.", "ml2": "Cuffie Sony", "ms2": "A Jana · 15 mag.", "ml3": "Atomic Habits", "ms3": "A Martin · 2 mag.", "p1": "<b>Promemoria automatici</b> — Squad manda il messaggio per te", "p2": "<b>Avvisi colorati</b> — vedi subito cosa è via da troppo", "p3": "<b>Bidirezionale</b> — vedi cosa hai prestato e preso in prestito"}}, "es": {"mock": {"v1": "Bolos", "v2": "Cine", "v3": "Gimnasio"}, "plan": {"ml1": "Bolos", "ms1": "Sáb 24.5. · 20:00", "ml2": "Cine", "ms2": "Sáb 24.5. · 19:00", "ml3": "Gimnasio", "ms3": "Sáb 24.5. · 20:30", "mockHdr": "¿A dónde vamos este sábado?", "mockAvail": "¿Cuándo podéis?", "p1": "<b>Votación en tiempo real</b> — ves los resultados al instante", "p2": "<b>Disponibilidad de miembros</b> — cada uno marca cuándo puede", "p3": "<b>Notificación del ganador</b> — Squad anuncia el resultado"}, "split": {"ml1": "Cerveza", "ms1": "Tomáš · 5 personas", "ml2": "Pizza", "ms2": "Jana · 4 personas", "p1": "<b>Cálculo automático</b> — Squad calcula la división", "p2": "<b>Confirmación de pago</b> — un toque y listo", "p3": "<b>Historial de gastos</b> — todo claro en un lugar"}, "photo": {"p1": "<b>Álbum compartido</b> — fotos de todos los miembros", "p2": "<b>Línea de tiempo</b> — cada evento tiene su propio álbum", "p3": "<b>Likes y comentarios</b> — reacciona a las fotos de tus amigos"}, "borrow": {"ml1": "Cargador Samsung", "ms1": "De Pedro · 10 may.", "ml2": "Auriculares Sony", "ms2": "A Jana · 15 may.", "ml3": "Atomic Habits", "ms3": "A Martín · 2 may.", "p1": "<b>Recordatorios automáticos</b> — Squad envía el mensaje", "p2": "<b>Alertas de color</b> — ves enseguida lo que lleva mucho tiempo", "p3": "<b>Bidireccional</b> — ves lo que prestaste y lo que tienes prestado"}}, "fr": {"mock": {"v1": "Bowling", "v2": "Cinéma", "v3": "Salle de sport"}, "plan": {"ml1": "Bowling", "ms1": "Sam 24.5. · 20:00", "ml2": "Cinéma", "ms2": "Sam 24.5. · 19:00", "ml3": "Sport", "ms3": "Sam 24.5. · 20:30", "mockHdr": "Où allons-nous ce samedi?", "mockAvail": "Quand êtes-vous dispo?", "p1": "<b>Vote en temps réel</b> — vois les résultats immédiatement", "p2": "<b>Disponibilité des membres</b> — chacun indique quand il peut", "p3": "<b>Notification du gagnant</b> — Squad annonce le résultat"}, "split": {"ml1": "Bière", "ms1": "Tomáš · 5 pers.", "ml2": "Pizza", "ms2": "Jana · 4 pers.", "p1": "<b>Calcul automatique</b> — Squad calcule la répartition", "p2": "<b>Confirmation de paiement</b> — un tap suffit", "p3": "<b>Historique des dépenses</b> — tout clair au même endroit"}, "photo": {"p1": "<b>Album partagé</b> — photos de tous les membres du groupe", "p2": "<b>Frise chronologique</b> — chaque événement a son album", "p3": "<b>Likes et commentaires</b> — réagis aux photos de tes amis"}, "borrow": {"ml1": "Chargeur Samsung", "ms1": "De Pierre · 10 mai", "ml2": "Casque Sony", "ms2": "À Jana · 15 mai", "ml3": "Atomic Habits", "ms3": "À Martin · 2 mai", "p1": "<b>Rappels automatiques</b> — Squad envoie le message pour toi", "p2": "<b>Alertes colorées</b> — vois ce qui est parti depuis trop longtemps", "p3": "<b>Bidirectionnel</b> — vois ce que tu as prêté et emprunté"}}};
+
+function s(id, val) { const el = document.getElementById(id); if (el) el.textContent = val }
+function h(id, val) { const el = document.getElementById(id); if (el) el.innerHTML = val }
+
+function setLang(lang) {
+  const t = LANGS[lang]; if (!t) return
+  document.documentElement.lang = lang
+
+  // ── NAV
+  document.getElementById('currentFlag').textContent = t.flag
+  document.getElementById('currentLangName').textContent = t.short
+  s('nav-login-lnk', t.login); s('nav-reg-lnk', t.reg)
+  document.querySelectorAll('.nav-links a').forEach((el, i) => { if (t.nav[i]) el.textContent = t.nav[i] })
+
+  // ── HERO
+  h('heroTitle', t.heroTitle)
+  s('heroSub', t.heroSub)
+  s('heroPrimary', t.heroPrimary); s('heroSecondary', t.heroSecondary)
+  s('stat1', t.stat1); s('stat2', t.stat2); s('stat3', t.stat3)
+
+  // ── PHONE MOCKUP
+  s('phn-group',   t.mock.group);   s('phn-members',  t.mock.members)
+  s('phn-where',   t.mock.where);   s('phn-expenses', t.mock.expenses)
+  const dm = DEMO_EXTRA[lang] || DEMO_EXTRA['sk']
+  s('phn-v1', dm.mock.v1); s('phn-v2', dm.mock.v2); s('phn-v3', dm.mock.v3)
+  s('phn-exp1', t.mock.exp1); s('phn-exp2', t.mock.exp2)
+  s('phn-nav1', t.mock.nav[0]); s('phn-nav2', t.mock.nav[1])
+  s('phn-nav3', t.mock.nav[2]); s('phn-nav4', t.mock.nav[3])
+
+  // ── FEATURES
+  s('feat-eyebrow', t.featEyebrow); h('feat-title', t.featTitle); s('feat-sub', t.featSub)
+  s('feat1-name', t.feat1n); s('feat1-desc', t.feat1d); s('feat1-tag', t.feat1t)
+  s('feat2-name', t.feat2n); s('feat2-desc', t.feat2d); s('feat2-tag', t.feat2t)
+  s('feat3-name', t.feat3n); s('feat3-desc', t.feat3d); s('feat3-tag', t.feat3t)
+  s('feat4-name', t.feat4n); s('feat4-desc', t.feat4d); s('feat4-tag', t.feat4t)
+
+  // ── DEMO TABS
+  s('demo-eyebrow', t.demoEyebrow); s('demo-title', t.demoTitle)
+  document.querySelectorAll('.ss-tab').forEach((el, i) => { if (t.demoTabs[i]) el.textContent = t.demoTabs[i] })
+
+  // ── DEMO: PLAN
+  s('demo-plan-eye', t.demo.plan.eye); s('demo-plan-title', t.demo.plan.title); s('demo-plan-desc', t.demo.plan.desc)
+  h('demo-plan-p1', dm.plan.p1); h('demo-plan-p2', dm.plan.p2); h('demo-plan-p3', dm.plan.p3)
+  s('mock-plan-hdr', dm.plan.mockHdr); s('mock-avail-hdr', dm.plan.mockAvail)
+  s('mock-plan-l1', dm.plan.ml1); s('mock-plan-s1', dm.plan.ms1)
+  s('mock-plan-l2', dm.plan.ml2); s('mock-plan-s2', dm.plan.ms2)
+  s('mock-plan-l3', dm.plan.ml3); s('mock-plan-s3', dm.plan.ms3)
+
+  // ── DEMO: SPLIT
+  s('demo-split-eye', t.demo.split.eye); s('demo-split-title', t.demo.split.title); s('demo-split-desc', t.demo.split.desc)
+  h('demo-split-p1', dm.split.p1); h('demo-split-p2', dm.split.p2); h('demo-split-p3', dm.split.p3)
+  s('mock-split-l1', dm.split.ml1); s('mock-split-s1', dm.split.ms1)
+  s('mock-split-l2', dm.split.ml2); s('mock-split-s2', dm.split.ms2)
+
+  // ── DEMO: PHOTOS
+  s('demo-photo-eye', t.demo.photo.eye); s('demo-photo-title', t.demo.photo.title); s('demo-photo-desc', t.demo.photo.desc)
+  h('demo-photo-p1', dm.photo.p1); h('demo-photo-p2', dm.photo.p2); h('demo-photo-p3', dm.photo.p3)
+
+  // ── DEMO: BORROW
+  s('demo-borrow-eye', t.demo.borrow.eye); s('demo-borrow-title', t.demo.borrow.title); s('demo-borrow-desc', t.demo.borrow.desc)
+  h('demo-borrow-p1', dm.borrow.p1); h('demo-borrow-p2', dm.borrow.p2); h('demo-borrow-p3', dm.borrow.p3)
+  s('mock-borrow-l1', dm.borrow.ml1); s('mock-borrow-s1', dm.borrow.ms1)
+  s('mock-borrow-l2', dm.borrow.ml2); s('mock-borrow-s2', dm.borrow.ms2)
+  s('mock-borrow-l3', dm.borrow.ml3); s('mock-borrow-s3', dm.borrow.ms3)
+
+  // ── HOW IT WORKS
+  s('how-eyebrow', t.howEyebrow); s('how-title', t.howTitle)
+  s('step1-title', t.step1t); s('step1-desc', t.step1d)
+  s('step2-title', t.step2t); s('step2-desc', t.step2d)
+  s('step3-title', t.step3t); s('step3-desc', t.step3d)
+
+  // ── PRICING
+  s('price-eyebrow', t.priceEyebrow); s('price-title', t.priceTitle)
+  s('price-sub', t.priceSub); s('price-note', t.priceNote)
+  s('plan-pro-badge', t.badge)
+  s('plan-free-name', t.freeName); s('plan-free-per', t.per); s('plan-free-desc', t.freeDesc); s('plan-free-btn', t.freeBtn)
+  s('plan-pro-name',  t.proName);  s('plan-pro-per',  t.per); s('plan-pro-desc',  t.proDesc);  s('plan-pro-btn',  t.proBtn)
+  s('plan-team-name', t.teamName); s('plan-team-per', t.per); s('plan-team-desc', t.teamDesc); s('plan-team-btn', t.teamBtn)
+  ;['pf-f1','pf-f2','pf-f3','pf-f4','pf-f5','pf-f6','pf-f7'].forEach((id, i) => s(id, t.ff[i]))
+  ;['pf-p1','pf-p2','pf-p3','pf-p4','pf-p5','pf-p6','pf-p7'].forEach((id, i) => s(id, t.pf[i]))
+  ;['pf-t1','pf-t2','pf-t3','pf-t4','pf-t5','pf-t6','pf-t7'].forEach((id, i) => s(id, t.tf[i]))
+
+  // ── CTA
+  s('cta-eyebrow', t.ctaEyebrow); s('cta-title', t.ctaTitle); s('cta-sub', t.ctaSub)
+  s('cta-btn1', t.ctaPrimary); s('cta-btn2', t.ctaSecondary)
+
+  // ── FOOTER
+  s('footer-lnk1', t.footer[0]); s('footer-lnk2', t.footer[1]); s('footer-lnk3', t.footer[2])
+
+  // ── LANG CHECKMARK
+  document.querySelectorAll('.lang-opt').forEach(o => o.classList.toggle('active', o.id === 'lo-' + lang))
+  closeLangDD()
+}
+</script>
+</body>
+</html>
